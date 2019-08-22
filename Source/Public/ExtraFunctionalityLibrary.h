@@ -81,6 +81,28 @@ public:
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|String")
 		static FString IncreaseVerbosityOfMessage(FString InMessage, bool bIsError=false);
 
+		/**
+		 * Prints a string to the log with a custom category type incase you want to search for that, and optionally, to the screen
+		 * If Print To Log is true, it will be visible in the Output Log window.  Otherwise it will be logged only as 'Verbose', so it generally won't show up.		
+		 * So a example log would be: [LogCustomBlueprintCategory: Custom Category:: Hello]
+		 *
+		 * @param	InString		The string to log out
+		 * @param	InCategory		The custom category that gets appended ontu the LogCustomBlueprintCategory category. If empty will use "EmptyCustomCategory".
+		 * @param	bPrintToScreen	Whether or not to print the output to the screen. Will not print to the screen in shipping or test builds.
+		 * @param	bPrintToLog		Whether or not to print the output to the log		 
+		 * @param	TextColor		Whether or not to print the output to the log
+		 * @param	Duration		The display duration (if Print to Screen is True). Using negative number will result in loading the duration time from the config.
+		 */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|String",
+			meta = (WorldContext = "WorldContextObject", CallableWithoutWorldContext, 
+				Keywords = "log print", AdvancedDisplay = "3", DevelopmentOnly))
+			static void PrintStringWithCategory(UObject* WorldContextObject,
+				const FString& InString = FString(TEXT("Hello")),
+				FString InCategory = FString(TEXT("Custom Category")),
+				bool bPrintToScreen = true, bool bPrintToLog = true,
+				FLinearColor TextColor = FLinearColor(0.0, 0.66, 1.0), float Duration = 2.f);
+
+
 		/** Returns a non destructive copy of SourceString with all underscores replaced with a space. */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|String")
 		static FString ReplaceUnderscore(FString SourceString);

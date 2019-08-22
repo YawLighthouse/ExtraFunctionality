@@ -44,7 +44,7 @@ public:
 	* To ensure the return value is always negative then make sure the InValue is positive using the Absolute function.
 	*/
 	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Integer",
-		meta = (DisplayName = "Negative (integer)"))
+		meta = (DisplayName = "Negative (integer)", CompactNodeTitle = "-i"))
 		static int Negate_Int(int InValue);
 
 #pragma endregion
@@ -80,7 +80,7 @@ public:
 	* To ensure the return value is always negative then make sure the InValue is positive using the Absolute function.
 	*/
 	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Float",
-		meta = (DisplayName = "Negative (float)"))
+		meta = (DisplayName = "Negative (float)", CompactNodeTitle = "-f"))
 		static float Negate_Float(float InValue);
 
 #pragma endregion
