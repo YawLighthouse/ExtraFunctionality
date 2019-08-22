@@ -12,6 +12,8 @@ DEFINE_LOG_CATEGORY(LogExtraMathLibrary);
 
 int UExtraMathLibrary::LoopToRange_Int(int InValue, int LoopAt)
 {
+	LoopAt = FMath::Max(LoopAt, 1);
+
 	if (FMath::Abs(InValue) < FMath::Abs(LoopAt))
 	{
 		return (InValue < 0) ? 
@@ -54,6 +56,8 @@ int UExtraMathLibrary::Negate_Int(int InValue)
 
 float UExtraMathLibrary::LoopToRange_Float(float InValue, float LoopAt)
 {
+	LoopAt = FMath::Max(LoopAt, 1.0f);
+
 	if (FMath::Abs(InValue) < FMath::Abs(LoopAt))
 	{
 		return (InValue < 0.0f) ?
