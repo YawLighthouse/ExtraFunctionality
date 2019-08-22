@@ -71,6 +71,8 @@ public:
 
 #pragma endregion
 
+#pragma region String Stuff
+
 		/** 
 		* Increases the verbosity of the inputted message for printing a string in blueprint to be either a warning or error by adding a blueprint friendly prefix. 
 		* Example: printing out "This is a test" as a warning will print in the log "warning:This is a test" and the prefix for an error would be "error:"
@@ -86,6 +88,18 @@ public:
 		/** Returns a non destructive copy of SourceString with all spaces removed. */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|String")
 		static FString RemoveSpaces(FString SourceString);
+
+		/** Returns true if SourceString is empty. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|String",
+			meta = (DisplayName = "Is Empty (String)", BlueprintAutocast))
+			static bool IsEmpty_String(const FString& SourceString) { return SourceString.IsEmpty(); }
+
+#pragma endregion
+
+		/** Returns true if SourceName is empty. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Name",
+			meta = (DisplayName = "Is Empty (Name)", BlueprintAutocast))
+			static bool IsEmpty_Name(const FName& SourceName) { return SourceName == NAME_None; }
 
 #pragma region IP stuff
 
@@ -121,10 +135,6 @@ public:
 		/** Returns the relative rotation of a socket */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Transformation")
 		static FRotator GetSocketRelativeRotation(USceneComponent* Target, FName InSocketName);
-
-		/** Returns true if SourceName is empty */
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Name", meta = (DisplayName = "Is Empty (Name)"))
-		static bool IsEmpty_Name(FName SourceName) { return SourceName == NAME_None; }
 
 		/** Marks the inputted component's render state dirty in all aspects possible. */
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library")
