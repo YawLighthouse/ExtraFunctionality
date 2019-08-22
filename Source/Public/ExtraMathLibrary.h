@@ -1,0 +1,105 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
+#include "ExtraMathLibrary.generated.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogExtraMathLibrary, Log, All);
+
+UCLASS()
+class EXTRAFUNCTIONALITY_API UExtraMathLibrary : public UBlueprintFunctionLibrary
+{
+	GENERATED_BODY()
+
+public:
+
+#pragma region Integer Math
+
+	/** 
+	* Handles looping InValue between zero and LoopAt only really works with positive values.
+	* EX: InValue = (1 + -2)[so really it inputted -1], LoopAt = 5, return = 4.
+	* EX: InValue = (4 + 2)[so really it inputted 6], LoopAt = 5, return = 1.
+	* @param LoopAt If InValue is equal to this value then it will loop back to zero so if your using a last index in an array its recommended to add 1 to have it loop after it hits the last index.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Integer", meta = (DisplayName = "Loop To Range (int)"))
+		static int LoopToRange_Int(int InValue, int LoopAt);
+
+	/** Generate a random number between X(Min) and Y(Max) */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Integer", meta = (DisplayName = "Random Integer In Range (int point)"))
+		static int RandomIntegerInRange_IntPoint(FIntPoint InIntPoint);
+
+	/**
+	* Handles sorting an array of integers, the direction is based on IsReversed
+	* @param IsReversed If true will sort from lowest to highest where Lowest is index 0 and Highest is last index. False is the inverse of what true outputs.
+	* @return Returns a copy of InArray but sorted so its nondestructive.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Integer", meta = (DisplayName = "Sort (int)"))
+		static TArray<int> Sort_Int(TArray<int> InArray, bool IsReversed);
+
+
+#pragma endregion
+
+#pragma region Float Math
+
+	/**
+	* Handles looping InValue between zero and LoopAt only really works with positive values.
+	* EX: InValue = (1 + -2)[so really it inputted -1], LoopAt = 5, return = 4.
+	* EX: InValue = (4 + 2)[so really it inputted 6], LoopAt = 5, return = 1.
+	* @param LoopAt If InValue is equal to this value then it will loop back to zero so if your using a last index in an array its recommended to add 1 to have it loop after it hits the last index.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Float", meta = (DisplayName = "Loop To Range (float)"))
+		static float LoopToRange_Float(float InValue, float LoopAt);
+
+	/** Generate a random number between X(Min) and Y(Max) */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Float", meta = (DisplayName = "Random Float In Range (vector2d)"))
+		static float RandomFloatInRange_Vector2D(FVector2D InVector2D);
+
+	/**
+	* Handles sorting an array of floats, the direction is based on IsReversed
+	* @param IsReversed If true will sort from lowest to highest where Lowest is index 0 and Highest is last index. False is the inverse of what true outputs.
+	* @return Returns a copy of InArray but sorted so its nondestructive.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Float", meta = (DisplayName = "Sort (float)"))
+		static TArray<float> Sort_Float(TArray<float> InArray, bool IsReversed);
+
+#pragma endregion
+
+#pragma region Vector2D Stuff
+
+	/** Returns true if Value is in range of Min and Max. Compares each component of vector(so if X is in range of Min.X and Max.X and same for Y). */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector2D")
+	static bool InRange(FVector2D Value, FVector2D Min, FVector2D Max);
+
+	/** Returns the center point between 2 vector2D points */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector2D")
+	static FVector2D GetCenterBetweenPoints2D(FVector2D V1, FVector2D V2);
+
+	/** Returns the lowest components of A and B. */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector2D", meta = (DisplayName = "Min (vector2d)", CompactNodeTitle = "MIN"))
+	static FVector2D Vector2D_Min(FVector2D A, FVector2D B);
+
+	/** Returns the highest components of A and B. */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector2D", meta = (DisplayName = "Max (vector2d)", CompactNodeTitle = "MAX"))
+	static FVector2D Vector2D_Max(FVector2D A, FVector2D B);
+
+	/** Clamps each component of Value between Min and Max(so clamps X to Min.X and Max.X, same for Y). */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector2D")
+	static FVector2D ClampVector2D(FVector2D Value, FVector2D Min, FVector2D Max);
+
+#pragma endregion
+
+#pragma region Vector Stuff
+
+	/** Returns the center point between 2 vector points */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector")
+	static FVector GetCenterBetweenPoints(FVector V1, FVector V2);
+
+	/** Clamps all components of Vector to Min and Max(so clamps X to Min.X and Max.X and same for Y & Z). */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector")
+	static FVector ClampToBounds(FVector Point, FVector Min, FVector Max);
+
+#pragma endregion
+
+};
+
+
