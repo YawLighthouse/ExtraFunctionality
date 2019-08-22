@@ -25,3 +25,5 @@ public:
 };
 
 IMPLEMENT_MODULE(FExtraFunctionalityModule, ExtraFunctionality)
+
+#undef LOCTEXT_NAMESPACE

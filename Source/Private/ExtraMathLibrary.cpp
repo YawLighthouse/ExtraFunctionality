@@ -47,6 +47,11 @@ TArray<int> UExtraMathLibrary::Sort_Int(TArray<int> InArray, bool IsReversed)
 	return InArray;
 }
 
+int UExtraMathLibrary::Negate_Int(int InValue)
+{
+	return -InValue;
+}
+
 float UExtraMathLibrary::LoopToRange_Float(float InValue, float LoopAt)
 {
 	if (FMath::Abs(InValue) < FMath::Abs(LoopAt))
@@ -82,6 +87,11 @@ TArray<float> UExtraMathLibrary::Sort_Float(TArray<float> InArray, bool IsRevers
 		});
 	}
 	return InArray;
+}
+
+float UExtraMathLibrary::Negate_Float(float InValue)
+{
+	return -InValue;
 }
 
 bool UExtraMathLibrary::InRange(FVector2D Value, FVector2D Min, FVector2D Max)
