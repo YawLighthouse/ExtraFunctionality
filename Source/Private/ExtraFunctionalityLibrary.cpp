@@ -310,6 +310,26 @@ bool UExtraFunctionalityLibrary::AreObjectsValid(TArray<UObject*> Objects)
 	return true;
 }
 
+bool UExtraFunctionalityLibrary::IsOverlappingAnyActors(UPrimitiveComponent * InComp, bool bExcludeSelf)
+{
+	// Valid check
+	if (InComp)
+	{		
+		TArray<AActor*> FoundActors;
+		InComp->GetOverlappingActors(FoundActors);
+
+		// Remove the component's actor
+		if (bExcludeSelf)
+		{
+			FoundActors.Remove(InComp->GetOwner());
+		}
+
+		// Check that the array isn't empty
+		return (FoundActors.Num() > 0);
+	}
+	return false;
+}
+
 bool UExtraFunctionalityLibrary::FindFirstInstanceOfActorType(const UObject * WorldContextObject, TSubclassOf<AActor> SearchClass, AActor *& FoundActor)
 {
 	FoundActor = nullptr;

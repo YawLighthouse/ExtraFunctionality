@@ -166,6 +166,10 @@ public:
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library", meta = (Keywords = "valid isvalid"))
 			static bool AreObjectsValid(TArray<UObject*> Objects);
 
+		/** Returns true if any actors are overlapping this component, will return false if component is invalid. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+			static bool IsOverlappingAnyActors(UPrimitiveComponent* InComp, bool bExcludeSelf = true);
+
 		/** 
 		* Attempts to return the first valid instance of an actor with SearchClass. 
 		* @return Returns true if found first valid instance of actor. False if otherwise.
