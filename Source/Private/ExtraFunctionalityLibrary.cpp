@@ -13,6 +13,7 @@
 #include "HAL/FileManager.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetStringLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "NetworkReplayStreaming/Public/NetworkReplayStreaming.h"
@@ -43,6 +44,15 @@ void UExtraFunctionalityLibrary::RequestExit(bool bForce)
 	FGenericPlatformMisc::RequestExit(bForce);
 }
 
+bool UExtraFunctionalityLibrary::AreObjectsSameClass(UObject * A, UObject * B)
+{
+	if (A && B)
+	{
+		return (A->GetClass() == B->GetClass());
+	}
+	return false;
+}
+
 void UExtraFunctionalityLibrary::GetAllLevels(UObject* WorldContextObject, TArray<ULevel*>& Levels)
 {
 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
@@ -53,26 +63,37 @@ TSubclassOf<class UObject> UExtraFunctionalityLibrary::GetClassFromAssetPath(FSt
 {
 		TSubclassOf<class UObject> AssetToCheck = NULL;
 
-		UObject* Asset = StaticLoadObject(UObject::StaticClass(), nullptr, *Path);
-		if (Asset != NULL)
+		// Attempt to load the asset normally
 		{
-			UBlueprint* bp = Cast<UBlueprint>(Asset);
-			if (bp != NULL)
+			FString L, R;
+			FString AssetName = Path;
+			AssetName.Split(".", &L, &R, ESearchCase::IgnoreCase, ESearchDir::FromEnd);		
+
+			if (AssetToCheck = LoadClass<UObject>(NULL, *AssetName, *Path))
 			{
-				//if (GEngine)
-					//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Found the Asset")));
-				AssetToCheck = (UClass*)bp->GeneratedClass;
+				return AssetToCheck;
+			}
+		}
+		// If we failed to load it normally then we try unconventional methods(cue Patrick looking menacing meme)
+
+		// Try loading the object as an asset		
+		UObject* Asset = StaticLoadObject(UObject::StaticClass(), nullptr, *Path);
+		if (Asset)
+		{									
+			UBlueprint* Bp = Cast<UBlueprint>(Asset->GetClass());
+			if (Bp)
+			{				
+				// Found asset
+				AssetToCheck = Bp->GetClass();
 			}
 			else
 			{
-				//if (GEngine)
-					//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Blueprint Asset is NULL")));
+				UE_LOG(LogExtraFunctionalityLibrary, Warning, TEXT("Class not valid"));				
 			}
 		}
 		else
 		{
-			//if (GEngine)
-				//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Asset is NULL")));
+			UE_LOG(LogExtraFunctionalityLibrary, Warning, TEXT("Asset is null"));
 		}
 
 		return AssetToCheck;

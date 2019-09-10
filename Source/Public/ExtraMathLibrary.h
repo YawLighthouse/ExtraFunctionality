@@ -123,6 +123,19 @@ public:
 
 #pragma endregion
 
+#pragma region Rotator Stuff
+
+	/** A-B */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Rotator", 
+		meta = (DisplayName = "Difference (Rotator)", ScriptMethod = "Diff", Keywords = "Delta",
+			CompactNodeTitle = "A - B"))
+		static FRotator RotatorDifference(FRotator A, FRotator B);
+
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Rotator")
+	static FRotator GridSnapRotation(FRotator Rotator, float GridDeg);
+
+#pragma endregion
+
 };
 
 

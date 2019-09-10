@@ -41,6 +41,10 @@ public:
 			meta = (DisplayName = "Shutdown", Keywords = "Shutdown"))
 		static void RequestExit(bool bForce);
 
+		/** Returns true if both objects are the same class, false if otherwise(or if either or null) */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+		static bool AreObjectsSameClass(UObject* A, UObject* B);
+
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library", 
 			meta = (WorldContext = "WorldContextObject", CallableWithoutWorldContext, 
 				DisplayName = "Get All Levels", Keywords = "Get All Levels"))
@@ -171,7 +175,7 @@ public:
 			static bool IsOverlappingAnyActors(UPrimitiveComponent* InComp, bool bExcludeSelf = true);
 
 		/** 
-		* Attempts to return the first valid instance of an actor with SearchClass. 
+		* Attempts to return the first valid instance of an actor with SearchClass.(This is now an official function in 4.23, so this is for previous engine version :) ) 
 		* @return Returns true if found first valid instance of actor. False if otherwise.
 		*/
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library",
