@@ -273,11 +273,11 @@ public:
 
 		/** Gets the closest component to the inputted point(in world space) from the inputted array of components */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
-			static UPrimitiveComponent* GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point);
+			static UPrimitiveComponent* GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point, bool Inverse);
 
 		/** Gets the closest actor to the inputted point(in world space) from the inputted array of actors */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
-			static AActor* GetClosestActorToPoint(TArray<AActor*> Actors, FVector Point);
+			static AActor* GetClosestActorToPoint(TArray<AActor*> Actors, FVector Point, bool Inverse);
 
 		/**
 		* Draws coordinate arrows at InComponent's world location for DebugDisplayTime's seconds if InComponent is valid.
