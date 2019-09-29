@@ -431,8 +431,16 @@ void UExtraFunctionalityLibrary::ClearInputMappings(UInputSettings * const InSet
 		return;
 	}
 
-	InSettings->AxisMappings.Empty();
-	InSettings->ActionMappings.Empty();
+	// Clear action mappings
+	for (const FInputActionKeyMapping& Action : InSettings->GetActionMappings())
+	{
+		InSettings->RemoveActionMapping(Action, false);
+	}
+	// Clear axis mappings
+	for (const FInputAxisKeyMapping& Axis : InSettings->GetAxisMappings())
+	{
+		InSettings->RemoveAxisMapping(Axis, false);
+	}
 
 	if (bForceRebuildKeymaps)
 	{
@@ -658,6 +666,50 @@ UObject * UExtraFunctionalityLibrary::GetCurrentCheckboxImage(UCheckBox * InChec
 	}
 
 	return FoundImage;
+}
+
+UPrimitiveComponent * UExtraFunctionalityLibrary::GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point)
+{
+	UPrimitiveComponent* ClosestComp = nullptr;
+	float ClosestDistance = MAX_flt;
+
+	for (UPrimitiveComponent* Comp : Comps)
+	{
+		if (!ClosestComp)
+		{
+			ClosestComp = Comp;
+		}
+		float CurrentDistance = (ClosestComp->GetComponentLocation() - Comp->GetComponentLocation()).SizeSquared();
+		if (CurrentDistance < ClosestDistance)
+		{
+			ClosestDistance = CurrentDistance;
+			ClosestComp = Comp;
+		}
+	}
+
+	return ClosestComp;
+}
+
+AActor * UExtraFunctionalityLibrary::GetClosestActorToPoint(TArray<AActor*> Actors, FVector Point)
+{
+	AActor* ClosestActor = nullptr;
+	float ClosestDistance = MAX_flt;
+
+	for (AActor* Actor : Actors)
+	{
+		if (!ClosestActor)
+		{
+			ClosestActor = Actor;
+		}
+		float CurrentDistance = (ClosestActor->GetActorLocation() - Actor->GetActorLocation()).SizeSquared();
+		if (CurrentDistance < ClosestDistance)
+		{
+			ClosestDistance = CurrentDistance;
+			ClosestActor = Actor;
+		}
+	}
+
+	return ClosestActor;
 }
 
 void UExtraFunctionalityLibrary::DrawDebugCoordinateArrowsAtComponent(USceneComponent * InComponent, FVector Offset, float ArrowLength, float ArrowSize, float ArrowThickness,
@@ -1052,7 +1104,7 @@ bool UExtraFunctionalityLibrary::IsReplayPaused(const UObject * WorldContextObje
 	{		
 		if (AWorldSettings* const Settings = World->GetWorldSettings())
 		{
-			return (Settings->Pauser);
+			return Settings->GetPauserPlayerState();			
 		}
 	}
 	return false;
@@ -1072,7 +1124,7 @@ void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObje
 	{					
 		AWorldSettings* const Settings = World->GetWorldSettings();
 
-		const bool IsPaused = Settings->Pauser;
+		const bool IsPaused = false;// Settings->Pauser;
 		if (IsPaused != NewState)
 		{				
 			UE_LOG(LogExtraFunctionalityLibrary, Display, TEXT("Changing replay pause state to: [%s]"), (NewState) ? TEXT("PAUSED") : TEXT("UN-PAUSED"));
@@ -1091,7 +1143,7 @@ void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObje
 				CVarAA->Set(1);
 				CVarMB->Set(0);
 
-				Settings->Pauser = World->GetFirstPlayerController()->PlayerState;
+				Settings->SetPauserPlayerState(World->GetFirstPlayerController()->PlayerState);				
 			}
 			// If we're unpausing
 			else
@@ -1099,8 +1151,8 @@ void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObje
 				// Reset motion blur and AA
 				CVarAA->Set(PreviousAASetting);
 				CVarMB->Set(PreviousMBSetting);
-
-				Settings->Pauser = NULL;
+				
+				Settings->SetPauserPlayerState(NULL);
 			}				
 		}		
 	}
