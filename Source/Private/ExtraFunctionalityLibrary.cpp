@@ -660,6 +660,50 @@ UObject * UExtraFunctionalityLibrary::GetCurrentCheckboxImage(UCheckBox * InChec
 	return FoundImage;
 }
 
+UPrimitiveComponent * UExtraFunctionalityLibrary::GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point)
+{
+	UPrimitiveComponent* ClosestComp = nullptr;
+	float ClosestDistance =  MAX_flt;
+
+	for (UPrimitiveComponent* Comp : Comps)
+	{
+		if (!ClosestComp)
+		{
+			ClosestComp = Comp;
+		}
+		float CurrentDistance = (ClosestComp->GetComponentLocation() - Comp->GetComponentLocation()).SizeSquared();
+		if (CurrentDistance < ClosestDistance)
+		{
+			ClosestDistance = CurrentDistance;
+			ClosestComp = Comp;
+		}
+	}
+
+	return ClosestComp;
+}
+
+AActor * UExtraFunctionalityLibrary::GetClosestActorToPoint(TArray<AActor*> Actors, FVector Point)
+{
+	AActor* ClosestActor = nullptr;
+	float ClosestDistance = MAX_flt;
+
+	for (AActor* Actor : Actors)
+	{
+		if (!ClosestActor)
+		{
+			ClosestActor = Actor;
+		}
+		float CurrentDistance = (ClosestActor->GetActorLocation() - Actor->GetActorLocation()).SizeSquared();
+		if (CurrentDistance < ClosestDistance)
+		{
+			ClosestDistance = CurrentDistance;
+			ClosestActor = Actor;
+		}
+	}
+
+	return ClosestActor;
+}
+
 void UExtraFunctionalityLibrary::DrawDebugCoordinateArrowsAtComponent(USceneComponent * InComponent, FVector Offset, float ArrowLength, float ArrowSize, float ArrowThickness,
 	float DebugDisplayTime, FLinearColor ForwardColor, FLinearColor RightColor, FLinearColor UpColor)
 {

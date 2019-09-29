@@ -271,6 +271,14 @@ public:
 
 #pragma endregion
 
+		/** Gets the closest component to the inputted point(in world space) from the inputted array of components */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+		UPrimitiveComponent* GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point);
+
+		/** Gets the closest actor to the inputted point(in world space) from the inputted array of actors */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+		AActor* GetClosestActorToPoint(TArray<AActor*> Actors, FVector Point);
+
 		/**
 		* Draws coordinate arrows at InComponent's world location for DebugDisplayTime's seconds if InComponent is valid.
 		* @param ForwardColor Forward Vector of InComponent(X).
