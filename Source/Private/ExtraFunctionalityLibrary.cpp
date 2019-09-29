@@ -660,44 +660,59 @@ UObject * UExtraFunctionalityLibrary::GetCurrentCheckboxImage(UCheckBox * InChec
 	return FoundImage;
 }
 
-UPrimitiveComponent * UExtraFunctionalityLibrary::GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point)
+UPrimitiveComponent * UExtraFunctionalityLibrary::GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point, bool Inverse)
 {
 	UPrimitiveComponent* ClosestComp = nullptr;
-	float ClosestDistance =  MAX_flt;
+	float ClosestDistance = (Inverse) ? 0.0f : MAX_flt;
 
 	for (UPrimitiveComponent* Comp : Comps)
 	{
-		if (!ClosestComp)
+		float CurrentDistance = (Comp->GetComponentLocation() - Point).SizeSquared();
+		if (Inverse)
 		{
-			ClosestComp = Comp;
+			if (CurrentDistance > ClosestDistance)
+			{
+				ClosestDistance = CurrentDistance;
+				ClosestComp = Comp;
+			}
 		}
-		float CurrentDistance = (ClosestComp->GetComponentLocation() - Comp->GetComponentLocation()).SizeSquared();
-		if (CurrentDistance < ClosestDistance)
+		else
 		{
-			ClosestDistance = CurrentDistance;
-			ClosestComp = Comp;
+			if (CurrentDistance < ClosestDistance)
+			{
+				ClosestDistance = CurrentDistance;
+				ClosestComp = Comp;
+			}
 		}
 	}
 
 	return ClosestComp;
 }
 
-AActor * UExtraFunctionalityLibrary::GetClosestActorToPoint(TArray<AActor*> Actors, FVector Point)
+AActor * UExtraFunctionalityLibrary::GetClosestActorToPoint(TArray<AActor*> Actors, FVector Point, bool Inverse)
 {
 	AActor* ClosestActor = nullptr;
-	float ClosestDistance = MAX_flt;
+	float ClosestDistance = (Inverse) ? 0.0f : MAX_flt;
 
 	for (AActor* Actor : Actors)
 	{
-		if (!ClosestActor)
+		float CurrentDistance = (Actor->GetActorLocation() - Point).SizeSquared();
+
+		if (Inverse)
 		{
-			ClosestActor = Actor;
+			if (CurrentDistance > ClosestDistance)
+			{
+				ClosestDistance = CurrentDistance;
+				ClosestActor = Actor;
+			}
 		}
-		float CurrentDistance = (ClosestActor->GetActorLocation() - Actor->GetActorLocation()).SizeSquared();
-		if (CurrentDistance < ClosestDistance)
+		else
 		{
-			ClosestDistance = CurrentDistance;
-			ClosestActor = Actor;
+			if (CurrentDistance < ClosestDistance)
+			{
+				ClosestDistance = CurrentDistance;
+				ClosestActor = Actor;
+			}
 		}
 	}
 
