@@ -54,6 +54,11 @@ int UExtraMathLibrary::Negate_Int(int InValue)
 	return -InValue;
 }
 
+float UExtraMathLibrary::OneMinus(float InValue)
+{
+	return (1.0f - InValue);
+}
+
 float UExtraMathLibrary::LoopToRange_Float(float InValue, float LoopAt)
 {
 	LoopAt = FMath::Max(LoopAt, 1.0f);
@@ -98,6 +103,12 @@ float UExtraMathLibrary::Negate_Float(float InValue)
 	return -InValue;
 }
 
+FVector2D UExtraMathLibrary::Round2DVector(FVector2D Value)
+{
+	return FVector2D(FMath::RoundToFloat(Value.X),
+		FMath::RoundToFloat(Value.Y));
+}
+
 bool UExtraMathLibrary::InRange(FVector2D Value, FVector2D Min, FVector2D Max)
 {
 	return (UKismetMathLibrary::InRange_FloatFloat(Value.X, Min.X, Max.X) && UKismetMathLibrary::InRange_FloatFloat(Value.Y, Min.Y, Max.Y));
@@ -121,6 +132,13 @@ FVector2D UExtraMathLibrary::Vector2D_Max(FVector2D A, FVector2D B)
 FVector2D UExtraMathLibrary::ClampVector2D(FVector2D Value, FVector2D Min, FVector2D Max)
 {
 	return FVector2D(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y));
+}
+
+FVector UExtraMathLibrary::RoundVector(FVector Value)
+{
+	return FVector(FMath::RoundToFloat(Value.X),
+		FMath::RoundToFloat(Value.Y),
+		FMath::RoundToFloat(Value.Z));
 }
 
 FVector UExtraMathLibrary::GetCenterBetweenPoints(FVector V1, FVector V2)
