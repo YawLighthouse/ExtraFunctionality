@@ -51,6 +51,11 @@ public:
 
 #pragma region Float Math
 
+	/** Performs the operation 1 - InValue, meant to be a shorthand function. */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Float",
+		meta = (CompactNodeTitle = "1-", Keywords = "-1"))
+	static float OneMinus(float InValue);
+
 	/**
 	* Handles looping InValue between zero and LoopAt only really works with positive values.
 	* EX: InValue = (1 + -2)[so really it inputted -1], LoopAt = 5, return = 4.
@@ -87,6 +92,10 @@ public:
 
 #pragma region Vector2D Stuff
 
+	/** Handles rounding each component of the 2D vector and returning that rounded 2D vector. */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector2D")
+	static FVector2D Round2DVector(FVector2D Value);
+
 	/** Returns true if Value is in range of Min and Max. Compares each component of vector(so if X is in range of Min.X and Max.X and same for Y). */
 	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector2D")
 	static bool InRange(FVector2D Value, FVector2D Min, FVector2D Max);
@@ -112,6 +121,10 @@ public:
 #pragma endregion
 
 #pragma region Vector Stuff
+
+	/** Handles rounding each component of the vector and returning that rounded vector. */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector")
+	static FVector RoundVector(FVector Value);
 
 	/** Returns the center point between 2 vector points */
 	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Vector")

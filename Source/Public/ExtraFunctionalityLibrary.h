@@ -3,24 +3,30 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/SplineComponent.h"
+#include "Components/SplineComponent.h" // This is for the ESplineCoordinateSpace
+#include "Components/SplineMeshComponent.h" // This is for ESplineMeshAxis
 #include "GameFramework/PlayerInput.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SlateCore/Public/Styling/SlateTypes.h"
 #include "Runtime/Engine/Classes/Engine/NetConnection.h"
 #include "Runtime/Sockets/Public/IPAddress.h"
+#include "ExtraDataTypes.h"
 #include "ExtraFunctionalityLibrary.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogExtraFunctionalityLibrary, Log, All);
 
 class AGameMode;
 
+class USplineMeshComponent;
+
 class UCheckBox;
-class UInputSettings;
 class UUserWidget;
 class UWidget;
 class UPanelWidget;
 class UTextBlock;
+
+class UInputSettings;
+class UStaticMesh;
 
 UCLASS()
 class EXTRAFUNCTIONALITY_API UExtraFunctionalityLibrary : public UBlueprintFunctionLibrary
@@ -28,6 +34,167 @@ class EXTRAFUNCTIONALITY_API UExtraFunctionalityLibrary : public UBlueprintFunct
 	GENERATED_BODY()
 
 public:
+
+#pragma region Platform Checks
+
+	/** Shorthand function for checking what platform type this application is currently running on. */
+	UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Platform", 
+		meta = (Keywords = "type platform", ExpandEnumAsExecs = "Result"))
+		static void SwitchOnPlatformType(EPlatformType& Result);
+
+	/** 
+	* Returns the current platform type.
+	* Defaults to Desktop if on a platform that isn't accounted for.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (Keywords = "type platform"))
+	static EPlatformType GetPlatformType();
+
+	/**
+	* Returns true if this is a debug build (UE_BUILD_DEBUG), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform|Build", 
+		meta = (DisplayName = "Is Debug Build", 
+			Keywords = "compile export mode version type build platform"))
+		static bool DebugBuild();
+
+	/**
+	* Returns true if this is a debug build (UE_BUILD_DEVELOPMENT), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform|Build", 
+		meta = (DisplayName = "Is Development Build", 
+			Keywords = "compile export mode version type build platform"))
+		static bool DevelopmentBuild();
+
+	/**
+	* Returns true if this is a debug build (UE_BUILD_TEST), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform|Build", 
+		meta = (DisplayName = "Is Test Build", 
+			Keywords = "compile export mode version type build platform"))
+		static bool TestBuild();
+
+	/**
+	* Returns true if this is a debug build (UE_BUILD_SHIPPING), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform|Build", 
+		meta = (DisplayName = "Is Shipping Build", 
+			Keywords = "compile export mode version type build platform"))
+		static bool ShippingBuild();
+
+	/**
+	* Returns true if this is inside the editor (WITH_EDITOR), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform|Build", 
+		meta = (DisplayName = "With Editor", 
+			Keywords = "compile export mode version type build platform in inside using"))
+		static bool WithEditor();
+
+	/**
+	* Returns true if this is the Windows platform (PLATFORM_WINDOWS), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Windows Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool WindowsPlatform();
+
+	/**
+	* Returns true if this is the Windows platform running on 32 bit (PLATFORM_WINDOWS and not _WIN64), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Windows Platform (32 bit)", 
+			Keywords = "compile export mode version type build platform"))
+		static bool Windows32Platform();
+
+	/**
+	* Returns true if this is the Windows platform running on 64 bit (PLATFORM_WINDOWS and _WIN64), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Windows Platform (64 bit)", 
+			Keywords = "compile export mode version type build platform"))
+		static bool Windows64Platform();
+
+	/**
+	* Returns true if this is the Windows RT platform (PLATFORM_WINRT), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Windows Rt Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool WindowsRtPlatform();
+
+	/**
+	* Returns true if this is the Windows RT ARM platform (PLATFORM_WINRT_ARM), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Windows Rt Arm Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool WindowsRtArmPlatform();
+
+	/**
+	* Returns true if this is the Linux platform (PLATFORM_LINUX), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Linux Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool LinuxPlatform();
+
+	/**
+	* Returns true if this is the Mac platform (PLATFORM_MAC), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Mac Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool MacPlatform();
+
+	/**
+	* Returns true if this is the PS4 platform (PLATFORM_PS4), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Ps4 Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool Ps4Platform();
+
+	/**
+	* Returns true if this is the Xbox One platform (PLATFORM_XBOXONE), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Xbox One Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool XboxOnePlatform();
+
+	/**
+	* Returns true if this is the Switch platform (PLATFORM_SWITCH), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Switch Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool SwitchPlatform();
+
+	/**
+	* Returns true if this is the Android platform (PLATFORM_ANDROID), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Android Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool AndroidPlatform();
+
+	/**
+	* Returns true if this is the IOS platform (PLATFORM_IOS), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Ios Platform", 
+			Keywords = "compile export mode version type build platform"))
+		static bool IosPlatform();
+
+	/**
+	* Returns true if this is a desktop (PLATFORM_DESKTOP), returns false otherwise.
+	*/
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform", 
+		meta = (DisplayName = "Is Desktop", 
+			Keywords = "compile export mode version type build platform"))
+		static bool DesktopPlatform();
+
+#pragma endregion
 
 		/** 
 		* Forces the game to crash, this is intended for debugging purposes and should not be used in packaged builds. 
@@ -41,9 +208,16 @@ public:
 			meta = (DisplayName = "Shutdown", Keywords = "Shutdown"))
 		static void RequestExit(bool bForce);
 
+		/** Handles updating the global audio device's volume ingame. DO NOT USE FOR SETTINGS */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library", meta = (WorldContext = "WorldContextObject"))
+		static void SetGlobalVolume(UObject* WorldContextObject, float InAmount);
+
 		/** Returns true if both objects are the same class, false if otherwise(or if either or null) */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
 		static bool AreObjectsSameClass(UObject* A, UObject* B);
+
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+			static bool IsClassSameAs(UObject* A, UClass* ClassToCompare);
 
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library", 
 			meta = (WorldContext = "WorldContextObject", CallableWithoutWorldContext, 
@@ -51,7 +225,7 @@ public:
 		static void GetAllLevels(UObject* WorldContextObject, TArray<ULevel*>& Levels);
 
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
-		static TSubclassOf<class UObject> GetClassFromAssetPath(FString Path);
+		static UClass* GetClassFromAssetPath(FString Path);
 
 		/** Converts a linear color to a slate color */		
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Conversions", 
@@ -59,11 +233,32 @@ public:
 			CompactNodeTitle = "->", BlueprintAutocast))
 		static FSlateColor Conv_LinearColorToSlateColor(FLinearColor InLinearColor) { return FSlateColor(InLinearColor); }
 
+		/** Converts an array of collision channel's to object type query's */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Conversions",
+			meta = (DisplayName = "ToObjectTypeQuery's (Collision Channel's)",
+				CompactNodeTitle = "->"))
+		static void Conv_CollisionChannelsToObjectTypeQuerys(
+			TArray<TEnumAsByte<ECollisionChannel>> Channels, TArray<TEnumAsByte<EObjectTypeQuery>>& ConvertedTypes);
+
+		/** Converts an collision channel to object type query */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Conversions",
+			meta = (DisplayName = "ToObjectTypeQuery (Collision Channel)",
+				CompactNodeTitle = "->", BlueprintAutocast))
+		static TEnumAsByte<EObjectTypeQuery> Conv_CollisionChannelToObjectTypeQuery(TEnumAsByte<ECollisionChannel> Channel);
+
 #pragma region Directory Stuff
 
 		/** Handles getting the local app data directory, in editor will return the entire project directory(IF USING DELETE DIRECTORY WITH THIS ONE, MAKE SURE ITS NOT IN EDITOR) */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Files")
-		static FString GetLocalAppDataDirectory();
+		static FString GetLocalAppDataDirectory();		
+
+		/** 
+		* Gets the sub directories within the inputted directory, 
+		* *NOTE* this can cause hitches!
+		* @param bDeepSearch Recursively loop through each directory searching for them, will increase hitch time.
+		*/
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Files")
+		static TArray<FString> GetSubDirectories(FString InDir, bool bDeepSearch);
 
 		/** Deletes the inputted directory if found. */
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Files")
@@ -71,11 +266,22 @@ public:
 
 		/** Deletes the inputted file at the directory if found. */
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Files")
-		static bool DeleteFile(FString InFileDir);
+		static bool DeleteFile(FString InFileDir);		
+
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Files", meta = 
+			(UnsafeDuringActorConstruction = "true", 
+			DeterminesOutputType = "InType", DynamicOutputParam = "OutputObjects"))
+		static bool GetObjectsOf(TSubclassOf<UObject> InType, 
+			TArray<UObject*>& OutputObjects, bool bIsBlueprintClass,
+			const FString& InFolder = "/Game/");
 
 #pragma endregion
 
 #pragma region String Stuff
+
+		/** Handles sorting an array of strings to be alphabetical */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Strings")
+		static TArray<FString> SortStrings(const TArray<FString> UnSortedStrings);
 
 		/** 
 		* Increases the verbosity of the inputted message for printing a string in blueprint to be either a warning or error by adding a blueprint friendly prefix. 
@@ -154,13 +360,87 @@ public:
 
 #pragma endregion
 
-		/** Returns the relative location of a socket */
+#pragma region Player Stuff
+
+		/** Returns the input priority of the inputted actor, returns zero if actor is invalid. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+		static int GetInputPriority(AActor* InActor);
+
+		/** Handles setting the input priority for the inputted actor. */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library")
+		static void SetInputPriority(AActor* InActor, int NewInputPriority);
+
+		/** 
+		* Shorthand function for easily enabling/disabling input for a pawn if its possessed by a player controller. 
+		* @return Returns if successfully set or not.
+		*/
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library")
+		static bool TrySetPlayerInputEnabled(APawn* InPawn, const bool bIsEnabled);				
+
+		/** Attempts to get the player controller from the inputted pawn. */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library", meta = (ExpandEnumAsExecs = "Result"))
+		static APlayerController* TryGetPlayerControllerFromPawn(APawn* InPawn, EExtraSwitch &Result);
+
+#pragma endregion
+
+#pragma region Physics Stuff
+
+		/** Adds force to a components rigid body instance(intended for when substepping) */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Physics")
+		static void AddForceToComponentBody(const UPrimitiveComponent* InComponent,
+			const FVector& Force, const bool bAccelChange);
+
+		/** 
+		* Adds force at a position to a components rigid body instance(intended for when substepping) 
+		* @param bLocalSpace If true applies the force in local space of the object, false will apply in world space.
+		*/
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Physics")
+		static void AddForceAtPositionToComponentBody(const UPrimitiveComponent* InComponent,
+			const FVector& Force, const FVector& Position, const bool bLocalSpace);
+
+		/** Adds impulse at position to a components rigid body instance(intended for when substepping) */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Physics")
+			static void AddImpulseAtPositionToComponentBody(const UPrimitiveComponent* InComponent,
+				const FVector& Impulse, const FVector& Position);
+
+		/** Adds impulse to a components rigid body instance(intended for when substepping) */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Physics")
+			static void AddImpulseToComponentBody(const UPrimitiveComponent* InComponent,
+				const FVector& Impulse, const bool bVelChange);
+
+		/** Adds torque(in radians) to a components rigid body instance(intended for when substepping) */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Physics")
+		static void AddTorqueInRadiansToComponentBody(const UPrimitiveComponent* InComponent,
+			const FVector& Torque, const bool bAccelChange);
+
+		/** Adds an angular impulse(in radians) to a components rigid body instance(intended for when substepping) */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Physics")
+			static void AddAngularImpulseInRadiansToComponentBody(const UPrimitiveComponent* InComponent,
+				const FVector& Impulse, const bool bVelChange);
+
+		/** Handles setting the velocity of a components rigid body instance(intended for when substepping) */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Physics")
+		static void SetLinearVelocityToComponentBody(const UPrimitiveComponent* InComponent,
+			const FVector& NewVel, const bool bAddToCurrent);
+
+		/** Handles setting the angular velocity of a components rigid body instance(intended for when substepping) */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Physics")
+		static void SetAngularVelocityInRadiansToComponentBody(const UPrimitiveComponent* InComponent,
+			const FVector& NewAngVel, const bool bAddToCurrent);
+
+#pragma endregion
+
+		/** Returns the relative location of a socket. */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Transformation")
 		static FVector GetSocketRelativeLocation(USceneComponent* Target, FName InSocketName);
 
-		/** Returns the relative rotation of a socket */
+		/** Returns the relative rotation of a socket. */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Transformation")
 		static FRotator GetSocketRelativeRotation(USceneComponent* Target, FName InSocketName);
+
+		/** Returns true if the inputted rotator is equal to zero. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Transformation")
+		static bool IsRotatorZero(FRotator InRot);
 
 		/** Marks the inputted component's render state dirty in all aspects possible. */
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library")
@@ -174,14 +454,22 @@ public:
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
 			static bool IsOverlappingAnyActors(UPrimitiveComponent* InComp, bool bExcludeSelf = true);
 
+		/** Returns the amount of actors in the world that are of type SearchClass */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library",
+			meta = (WorldContext = "WorldContextObject"))
+			static int GetNumberOfActorsOfType(const UObject* WorldContextObject, TSubclassOf<AActor> SearchClass);
+
 		/** 
-		* Attempts to return the first valid instance of an actor with SearchClass.(This is now an official function in 4.23, so this is for previous engine version :) ) 
+		* Attempts to return the first valid instance of an actor with SearchClass.) 
 		* @return Returns true if found first valid instance of actor. False if otherwise.
 		*/
+		UE_DEPRECATED(4.23, "This function is deprecated. Please use GetActorOfClass instead.")
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library",
-			meta = (WorldContext = "WorldContextObject", DeterminesOutputType = "SearchClass", DynamicOutputParam = "FoundActor", 
-				Keywords = "get first"))
-		static bool FindFirstInstanceOfActorType(const UObject* WorldContextObject, TSubclassOf<AActor> SearchClass, AActor*& FoundActor);
+			meta = (WorldContext = "WorldContextObject", 
+				DeterminesOutputType = "SearchClass", DynamicOutputParam = "FoundActor", 
+				Keywords = "first"))
+		static bool FindFirstInstanceOfActorType(const UObject* WorldContextObject, 
+			TSubclassOf<AActor> SearchClass, AActor*& FoundActor);
 
 		/** Marks multiple inputted component's render state dirty. */
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library", meta = (DisplayName = "Mark Render Dirty (Array)"))
@@ -205,13 +493,18 @@ public:
 		* Having to specify each input allows for agnostic values.
 		*/
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
-		static float GetAxisValueOfInputs(const APlayerController* InPlayerController, const FKey PositiveKey, const FKey NegativeKey);
+		static float GetAxisValueOfInputs(const APlayerController* InPlayerController, 
+			const FKey PositiveKey, const FKey NegativeKey);
 
 		/** Shorthand function for getting the last index of material array in Primitive Component. RETURNS -1 IF TARGET IS INVALID */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library", meta = (CompactNodeTitle = "LAST INDEX"))
 		static int GetLastMaterialIndex(UPrimitiveComponent* Target);
 
-#pragma region Input Settings Stuff
+		/** Returns the static(default) material instances for the inputted static mesh. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+		static TArray<UMaterialInterface*> GetStaticMaterials(UStaticMesh* InMesh);
+
+#pragma region Input Settings Stuff						
 
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Input")
 		static void ClearInputMappings(UInputSettings* const InSettings, bool bForceRebuildKeymaps, bool bSaveKeyMappings);
@@ -226,12 +519,35 @@ public:
 
 #pragma region Widget Stuff
 
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI", meta =
+			(CompactNodeTitle = "->", BlueprintAutocast))
+		static EFocusCausedBy GetFocusCauseFromEvent(const FFocusEvent& InEvent);
+
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI", meta = 
+			(CompactNodeTitle = "->", BlueprintAutocast))
+		static FString FocusEventToString(const FFocusEvent& InEvent);
+
+		/** Returns which widget is in focus. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI")
+		static UWidget* GetWidgetInFocus();
+
+		/** Handles getting the widget that is in focus within the parent widget, returns true if any widgets within the parent widget has focus. False for otherwise. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI")
+		static bool GetSubWidgetInFocus(UUserWidget* ParentWidget, UWidget* & FoundWidget);
+
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI")
+		static TArray<UWidget*> GetAllSubWidgetsInParent(UUserWidget* ParentWidget);
+
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI")
+		static void ClearAllUserFocus();
+
 		/** 
 		* Finds all widgets of type Widget Class in Parent Widget. 
 		* @param ParentWidget The widget to use as a parent, will look inside this widget's tree if it contains any widgets of WidgetClass.
 		* @param WidgetClass The widget class to search for inside ParentWidget's widget tree. Can return an empty array if none found.
 		*/
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI", meta = (DeterminesOutputType = "WidgetClass", DynamicOutputParam = "FoundWidgets"))
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI", 
+			meta = (DeterminesOutputType = "WidgetClass", DynamicOutputParam = "FoundWidgets"))
 		static void GetAllWidgetsOfTypeInUserWidget(UUserWidget* ParentWidget, TSubclassOf<UWidget> WidgetClass, TArray<UWidget*>& FoundWidgets);		
 
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI|Textblock")
@@ -271,9 +587,20 @@ public:
 
 #pragma endregion
 
+		/** Searches for an scene component that's name is matching the inputted search name. Returns true if success, and false if otherwise. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+			static bool FindSceneComponentByName(AActor* ActorToSearchIn,
+				const FString& CompName, USceneComponent*& FoundComp);
+
+		/** Searches for an actor component that's name is matching the inputted search name. Returns true if success, and false if otherwise. */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+			static bool FindActorComponentByName(AActor* ActorToSearchIn, 
+				const FString& CompName, UActorComponent*& FoundComp);
+
 		/** Gets the closest component to the inputted point(in world space) from the inputted array of components */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
-			static UPrimitiveComponent* GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point, bool Inverse);
+			static UPrimitiveComponent* GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, 
+				FVector Point, bool Inverse);
 
 		/** Gets the closest actor to the inputted point(in world space) from the inputted array of actors */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
@@ -337,7 +664,7 @@ public:
 		*/
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Spline",
 			meta = (TraceDistance = "1000.0", AutoCreateRefTerm = "ActorsToIgnore", AdvancedDisplay = "TraceColor,TraceHitColor,DrawDebugTime"))
-			static void SnapSignleSplinePointToGround(USplineComponent* SplineComp, int32 SplinePointToSnap, float TraceDistance, bool bTraceComplex,
+			static void SnapSingleSplinePointToGround(USplineComponent* SplineComp, int32 SplinePointToSnap, float TraceDistance, bool bTraceComplex,
 				ETraceTypeQuery TraceChannel, const TArray<AActor*>& ActorsToIgnore, bool bDrawDebug = false,
 				FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawDebugTime = 5.0f);
 
@@ -380,6 +707,19 @@ public:
 		/** Gets the location and rotation along spline, both at the provided input key value */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Spline")
 			static void FindLocationAndRotationAtSplineInputKey(FVector& Location, FRotator& Rotation, USplineComponent* SplineComp, float InKey, ESplineCoordinateSpace::Type CoordinateSpace);
+
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Spline",
+			meta = (AutoCreateRefTerm = "OptionalMaterials, RelativeTransform"))
+			static TArray<USplineMeshComponent*> BuildSplineMeshesAlongSpline(
+			USplineComponent* SplineComp, UStaticMesh* SplineMesh,
+			TArray<UMaterialInterface*> OptionalMaterials,
+			UPARAM(ref) const FTransform& RelativeTransform,
+			TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis,
+			bool bAffectNavigation, bool bGenerateOverlapEvents,
+			TEnumAsByte<ECollisionEnabled::Type> CollisionEnabled,
+			TEnumAsByte<EObjectTypeQuery> ObjectType,
+			EComponentMobility::Type Mobility,
+			FVector2D StartScale = FVector2D(1.0f, 1.0f), FVector2D EndScale = FVector2D(1.0f, 1.0f));
 
 #pragma endregion
 
@@ -512,5 +852,4 @@ public:
 #pragma endregion
 
 };
-
 

@@ -1,7 +1,9 @@
 
 
 #include "ExtraFunctionalityLibrary.h"
+#include "AudioDevice.h"
 #include "Components/SceneComponent.h"
+#include "Components/Widget.h"
 #include "ConfigCacheIni.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/Engine.h"
@@ -10,6 +12,7 @@
 #include "Engine/Classes/GameFramework/GameMode.h"
 #include "GenericPlatformMisc.h"
 #include "ExtraMathLibrary.h"
+#include "Framework/Application/SlateApplication.h"
 #include "HAL/FileManager.h"
 #include "GameFramework/InputSettings.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -17,11 +20,13 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "NetworkReplayStreaming/Public/NetworkReplayStreaming.h"
+#include "Engine/ObjectLibrary.h"
 #include "Paths.h"
 #include "Runtime/Engine/Classes/Engine/DemoNetDriver.h"
 #include "UMG/Public/Components/CheckBox.h"
 #include "UMG/Public/Components/TextBlock.h"
 #include "UserWidget.h"
+#include "Widgets/SWidget.h"
 #include "WidgetTree.h"
 
 DEFINE_LOG_CATEGORY(LogExtraFunctionalityLibrary);
@@ -29,13 +34,217 @@ DEFINE_LOG_CATEGORY(LogExtraFunctionalityLibrary);
 DECLARE_LOG_CATEGORY_EXTERN(LogCustomBlueprintCategory, Log, All);
 DEFINE_LOG_CATEGORY(LogCustomBlueprintCategory);
 
+#pragma region Platform Checks
+
+void UExtraFunctionalityLibrary::SwitchOnPlatformType(EPlatformType& Result)
+{
+	Result = GetPlatformType();
+}
+
+EPlatformType UExtraFunctionalityLibrary::GetPlatformType()
+{
+#if PLATFORM_XBOXONE
+		return EPlatformType::XboxOne;
+#elif PLATFORM_PS4
+		return EPlatformType::PS4;
+#elif PLATFORM_SWITCH
+		return EPlatformType::Switch;
+#else
+	return EPlatformType::Desktop;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::DebugBuild()
+{
+#if UE_BUILD_DEBUG
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::DevelopmentBuild()
+{
+#if UE_BUILD_DEVELOPMENT
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::TestBuild()
+{
+#if UE_BUILD_TEST
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::ShippingBuild()
+{
+#if UE_BUILD_SHIPPING
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::WithEditor()
+{
+#if WITH_EDITOR
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::WindowsPlatform()
+{
+#if PLATFORM_WINDOWS
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::Windows32Platform()
+{
+#if PLATFORM_WINDOWS
+#ifdef _WIN64
+	return false;
+#else
+	return true;
+#endif
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::Windows64Platform()
+{
+#if PLATFORM_WINDOWS
+#ifdef _WIN64
+	return true;
+#else
+	return false;
+#endif
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::WindowsRtPlatform()
+{
+#ifdef PLATFORM_WINRT
+#if PLATFORM_WINRT
+	return true;
+#else
+	return false;
+#endif
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::WindowsRtArmPlatform()
+{
+#ifdef PLATFORM_WINRT_ARM
+#if PLATFORM_WINRT_ARM
+	return true;
+#else
+	return false;
+#endif
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::LinuxPlatform()
+{
+#if PLATFORM_LINUX
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::MacPlatform()
+{
+#if PLATFORM_MAC
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::Ps4Platform()
+{
+#if PLATFORM_PS4
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::XboxOnePlatform()
+{
+#if PLATFORM_XBOXONE
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::SwitchPlatform()
+{
+#if PLATFORM_SWITCH
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::AndroidPlatform()
+{
+#if PLATFORM_ANDROID
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::IosPlatform()
+{
+#if PLATFORM_IOS
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::DesktopPlatform()
+{
+#if PLATFORM_DESKTOP
+	return true;
+#else
+	return false;
+#endif
+}
+
+#pragma endregion
 
 void UExtraFunctionalityLibrary::ForceCrash(const FString& CrashMessage)
 {
 #if !UE_BUILD_SHIPPING
-	UE_LOG(LogExtraFunctionalityLibrary, Fatal, TEXT("FORCING CRASH TO HAPPEN: %s"), *CrashMessage);
+	// Log the error a bunch to know where it happens exactly
+	for (int index = 5; index-- > 0;)
+	{
+		UE_LOG(LogExtraFunctionalityLibrary, Fatal, TEXT("FORCING CRASH TO HAPPEN: %s"), *CrashMessage);
+	}
 
-	UE_LOG(LogExtraFunctionalityLibrary, Display, TEXT("[%s]"), *"CRASH CRASH BAYBEEE");
+	// Print that this was intended
+	FDebug::AssertFailed("This crash was caused by UExtraFunctionalityLibrary::ForceCrash and was meant to happen.", __FILE__, __LINE__);
 #endif
 }
 
@@ -44,13 +253,37 @@ void UExtraFunctionalityLibrary::RequestExit(bool bForce)
 	FGenericPlatformMisc::RequestExit(bForce);
 }
 
-bool UExtraFunctionalityLibrary::AreObjectsSameClass(UObject * A, UObject * B)
+void UExtraFunctionalityLibrary::SetGlobalVolume(UObject * WorldContextObject, float InAmount)
 {
+	if (GEngine)
+	{
+		if(UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+		{
+			if (FAudioDevice* AudioDevice = World->GetAudioDevice())
+			{
+				AudioDevice->SetTransientMasterVolume(FMath::Max(InAmount, 0.0f));
+			}
+		}
+	}
+}
+
+bool UExtraFunctionalityLibrary::AreObjectsSameClass(UObject * A, UObject * B)
+{	
 	if (A && B)
 	{
 		return (A->GetClass() == B->GetClass());
 	}
 	return false;
+}
+
+bool UExtraFunctionalityLibrary::IsClassSameAs(UObject * A, UClass* ClassToCompare)
+{
+	if (!A || !ClassToCompare)
+	{
+		return false;
+	}
+
+	return (A->GetClass() == ClassToCompare);
 }
 
 void UExtraFunctionalityLibrary::GetAllLevels(UObject* WorldContextObject, TArray<ULevel*>& Levels)
@@ -59,9 +292,9 @@ void UExtraFunctionalityLibrary::GetAllLevels(UObject* WorldContextObject, TArra
 	Levels = World->GetLevels();
 }
 
-TSubclassOf<class UObject> UExtraFunctionalityLibrary::GetClassFromAssetPath(FString Path)
+UClass* UExtraFunctionalityLibrary::GetClassFromAssetPath(FString Path)
 {
-		TSubclassOf<class UObject> AssetToCheck = NULL;
+		TSubclassOf<UObject> AssetToCheck = NULL;
 
 		// Attempt to load the asset normally
 		{
@@ -71,7 +304,7 @@ TSubclassOf<class UObject> UExtraFunctionalityLibrary::GetClassFromAssetPath(FSt
 
 			if (AssetToCheck = LoadClass<UObject>(NULL, *AssetName, *Path))
 			{
-				return AssetToCheck;
+				return AssetToCheck.Get();
 			}
 		}
 		// If we failed to load it normally then we try unconventional methods(cue Patrick looking menacing meme)
@@ -96,12 +329,57 @@ TSubclassOf<class UObject> UExtraFunctionalityLibrary::GetClassFromAssetPath(FSt
 			UE_LOG(LogExtraFunctionalityLibrary, Warning, TEXT("Asset is null"));
 		}
 
-		return AssetToCheck;
+		return AssetToCheck.Get();
+}
+
+void UExtraFunctionalityLibrary::Conv_CollisionChannelsToObjectTypeQuerys(
+	TArray<TEnumAsByte<ECollisionChannel>> Channels, TArray<TEnumAsByte<EObjectTypeQuery>>& ConvertedTypes)
+{	
+	ConvertedTypes.Reset();
+	for (ECollisionChannel Channel : Channels)
+	{
+		ConvertedTypes.Add(UEngineTypes::ConvertToObjectType(Channel));
+	}	
+}
+
+TEnumAsByte<EObjectTypeQuery> UExtraFunctionalityLibrary::Conv_CollisionChannelToObjectTypeQuery(
+	TEnumAsByte<ECollisionChannel> Channel)
+{
+	return UEngineTypes::ConvertToObjectType(Channel);	
 }
 
 FString UExtraFunctionalityLibrary::GetLocalAppDataDirectory()
 {
 	return (FPaths::ConvertRelativePathToFull(FPaths::ProjectUserDir()));
+}
+
+TArray<FString> UExtraFunctionalityLibrary::GetSubDirectories(FString InDir, bool bDeepSearch)
+{			
+	// Turn it into a wildcard search
+	FString FinalPath = InDir / TEXT("*");
+
+	TArray<FString> FoundDir;
+	// Gets finds the directories only
+	IFileManager::Get().FindFiles(FoundDir, *FinalPath, false, true);
+
+	// Loop through and add the directories path
+	for (int index = FoundDir.Num(); index-- > 0;)
+	{
+		FoundDir[index] = (InDir + FoundDir[index] + "/");
+	}
+
+	// If we found directories and we're doing a deep search
+	if (FoundDir.Num() > 0 && bDeepSearch)
+	{
+		// For each directory add each once's sub directories recursively
+		for (int index = FoundDir.Num(); index-- > 0;)
+		{
+			// If that subdirectory has a subdirectory then it will keep going till an end is reached
+			TArray<FString> SubDir = GetSubDirectories(FoundDir[index], true);
+			FoundDir.Append(SubDir);
+		}
+	}
+	return FoundDir;
 }
 
 bool UExtraFunctionalityLibrary::DeleteDirectory(FString InDir)
@@ -122,6 +400,54 @@ bool UExtraFunctionalityLibrary::DeleteFile(FString InFileDir)
 	}
 	UE_LOG(LogExtraFunctionalityLibrary, Warning, TEXT("File: [%s] does not exist, so we're counting this as already deleted!"), *InFileDir);
 	return true;
+}
+
+bool UExtraFunctionalityLibrary::GetObjectsOf(TSubclassOf<UObject> InType, 
+	TArray<UObject*>& OutputObjects, bool bIsBlueprintClass, 
+	const FString & InFolder)
+{
+	// Valid check
+	if (!InType || InFolder.IsEmpty())
+	{
+		UE_LOG(LogExtraFunctionalityLibrary, Warning, TEXT("Invalid parameters to get objects of."));
+		return false;
+	}
+
+	// Get the objects in folder
+	UObjectLibrary* Library = UObjectLibrary::CreateLibrary(InType, bIsBlueprintClass, GIsEditor);
+	// Add the object library to asset registry to get the assets from it
+	Library->AddToRoot();
+
+	// Load the assets/blueprints
+	if (bIsBlueprintClass)
+	{
+		Library->LoadBlueprintsFromPath(InFolder);
+	}
+	else
+	{		
+		
+		Library->LoadAssetsFromPath(InFolder);
+	}
+	
+	// Get the assets from the object libary to return them
+	Library->GetObjects<UObject>(OutputObjects);
+	Library->RemoveFromRoot();
+	
+	if (OutputObjects.Num() > 0)
+	{
+		// Log how many we found
+		UE_LOG(LogExtraFunctionalityLibrary, Display, TEXT("Found %d %s's in directory: %s"), 
+			OutputObjects.Num(), *InType->GetName(), *InFolder);
+	}
+
+	return (OutputObjects.Num() > 0);
+}
+
+TArray<FString> UExtraFunctionalityLibrary::SortStrings(const TArray<FString> UnSortedStrings)
+{
+	TArray<FString> SortedStrings = UnSortedStrings;
+	SortedStrings.StableSort();
+	return SortedStrings;
 }
 
 FString UExtraFunctionalityLibrary::IncreaseVerbosityOfMessage(FString InMessage, bool bIsError)
@@ -274,6 +600,141 @@ FString UExtraFunctionalityLibrary::GetPlayerIP(const APlayerController* InPlaye
 	return FString();
 }
 
+int UExtraFunctionalityLibrary::GetInputPriority(AActor* InActor)
+{
+	if (!InActor)
+	{
+		return 0;
+	}
+
+	return InActor->InputPriority;
+}
+
+void UExtraFunctionalityLibrary::SetInputPriority(AActor* InActor, int NewInputPriority)
+{
+	if (!InActor)
+	{
+		return;
+	}
+	
+	InActor->InputPriority = NewInputPriority;
+}
+
+bool UExtraFunctionalityLibrary::TrySetPlayerInputEnabled(APawn * InPawn, const bool bIsEnabled)
+{
+	if (InPawn)
+	{
+		if (APlayerController* PC = Cast<APlayerController>(InPawn->GetController()))
+		{			
+			if (bIsEnabled)
+			{
+				InPawn->EnableInput(PC);
+			}
+			else
+			{
+				InPawn->DisableInput(PC);
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+APlayerController* UExtraFunctionalityLibrary::TryGetPlayerControllerFromPawn(APawn * InPawn, EExtraSwitch & Result)
+{
+	Result = EExtraSwitch::OnFailed;
+	if (InPawn)
+	{
+		if (APlayerController* PC = Cast<APlayerController>(InPawn->GetController()))
+		{
+			Result = EExtraSwitch::OnSucceeded;
+			return PC;
+		}
+	}
+	return nullptr;
+}
+
+void UExtraFunctionalityLibrary::AddForceToComponentBody(const UPrimitiveComponent * InComponent,
+	const FVector& Force, const bool bAccelChange)
+{
+	if (!InComponent || !InComponent->IsSimulatingPhysics() || !InComponent->GetBodyInstance())
+	{
+		return;
+	}
+	InComponent->GetBodyInstance()->AddForce(Force, false, bAccelChange);
+}
+
+void UExtraFunctionalityLibrary::AddForceAtPositionToComponentBody(const UPrimitiveComponent * InComponent,
+	const FVector& Force, const FVector& Position, const bool bLocalSpace)
+{
+	if (!InComponent || !InComponent->IsSimulatingPhysics() || !InComponent->GetBodyInstance())
+	{
+		return;
+	}
+	InComponent->GetBodyInstance()->AddForceAtPosition(Force, Position, false, bLocalSpace);	
+}
+
+void UExtraFunctionalityLibrary::AddImpulseAtPositionToComponentBody(const UPrimitiveComponent * InComponent,
+	const FVector& Impulse, const FVector& Position)
+{
+	if (!InComponent || !InComponent->IsSimulatingPhysics() || !InComponent->GetBodyInstance())
+	{
+		return;
+	}
+	InComponent->GetBodyInstance()->AddImpulseAtPosition(Impulse, Position);
+}
+
+void UExtraFunctionalityLibrary::AddImpulseToComponentBody(const UPrimitiveComponent * InComponent,
+	const FVector& Impulse, const bool bVelChange)
+{
+	if (!InComponent || !InComponent->IsSimulatingPhysics() || !InComponent->GetBodyInstance())
+	{
+		return;
+	}
+	InComponent->GetBodyInstance()->AddImpulse(Impulse, bVelChange);
+}
+
+void UExtraFunctionalityLibrary::AddTorqueInRadiansToComponentBody(const UPrimitiveComponent * InComponent,
+	const FVector & Torque, const bool bAccelChange)
+{
+	if (!InComponent || !InComponent->IsSimulatingPhysics() || !InComponent->GetBodyInstance())
+	{
+		return;
+	}
+	InComponent->GetBodyInstance()->AddTorqueInRadians(Torque, false, bAccelChange);
+}
+
+void UExtraFunctionalityLibrary::AddAngularImpulseInRadiansToComponentBody(const UPrimitiveComponent * InComponent,
+	const FVector & Impulse, const bool bVelChange)
+{
+	if (!InComponent || !InComponent->IsSimulatingPhysics() || !InComponent->GetBodyInstance())
+	{
+		return;
+	}
+	InComponent->GetBodyInstance()->AddAngularImpulseInRadians(Impulse, bVelChange);
+}
+
+void UExtraFunctionalityLibrary::SetLinearVelocityToComponentBody(const UPrimitiveComponent * InComponent,
+	const FVector & NewVel, const bool bAddToCurrent)
+{
+	if (!InComponent || !InComponent->IsSimulatingPhysics() || !InComponent->GetBodyInstance())
+	{
+		return;
+	}
+	InComponent->GetBodyInstance()->SetLinearVelocity(NewVel, bAddToCurrent);
+}
+
+void UExtraFunctionalityLibrary::SetAngularVelocityInRadiansToComponentBody(const UPrimitiveComponent * InComponent,
+	const FVector & NewAngVel, const bool bAddToCurrent)
+{
+	if (!InComponent || !InComponent->IsSimulatingPhysics() || !InComponent->GetBodyInstance())
+	{
+		return;
+	}
+	InComponent->GetBodyInstance()->SetAngularVelocityInRadians(NewAngVel, bAddToCurrent);
+}
+
 FVector UExtraFunctionalityLibrary::GetSocketRelativeLocation(USceneComponent * Target, FName InSocketName)
 {
 	if (Target)
@@ -296,6 +757,11 @@ FRotator UExtraFunctionalityLibrary::GetSocketRelativeRotation(USceneComponent *
 		}
 	}
 	return FRotator();
+}
+
+bool UExtraFunctionalityLibrary::IsRotatorZero(FRotator InRot)
+{
+	return InRot.IsZero();
 }
 
 bool UExtraFunctionalityLibrary::MarkRenderDirty(USceneComponent * InComp)
@@ -349,6 +815,26 @@ bool UExtraFunctionalityLibrary::IsOverlappingAnyActors(UPrimitiveComponent * In
 		return (FoundActors.Num() > 0);
 	}
 	return false;
+}
+
+int UExtraFunctionalityLibrary::GetNumberOfActorsOfType(const UObject * WorldContextObject, TSubclassOf<AActor> SearchClass)
+{
+	int FoundAmount = 0;
+
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	{			
+		// Loop through each actor in the world that is the same class as search class
+		for (TActorIterator<AActor> ActorItr(World, SearchClass); ActorItr; ++ActorItr)
+		{
+			AActor* Actor = *ActorItr;
+			if (!Actor->IsPendingKill())
+			{				
+				FoundAmount++;
+			}
+		}
+	}
+
+	return FoundAmount;
 }
 
 bool UExtraFunctionalityLibrary::FindFirstInstanceOfActorType(const UObject * WorldContextObject, TSubclassOf<AActor> SearchClass, AActor *& FoundActor)
@@ -423,6 +909,21 @@ int UExtraFunctionalityLibrary::GetLastMaterialIndex(UPrimitiveComponent * Targe
 	return (Target->GetNumMaterials() - 1);
 }
 
+TArray<UMaterialInterface*> UExtraFunctionalityLibrary::GetStaticMaterials(UStaticMesh * InMesh)
+{
+	if (!InMesh)
+	{
+		return TArray<UMaterialInterface*>();
+	}
+
+	TArray<UMaterialInterface*> Mats;
+	for (FStaticMaterial SMat : InMesh->StaticMaterials)
+	{
+		Mats.Add(SMat.MaterialInterface);
+	}
+	return Mats;
+}
+
 void UExtraFunctionalityLibrary::ClearInputMappings(UInputSettings * const InSettings, bool bForceRebuildKeymaps, bool bSaveKeyMappings)
 {
 	// Dont continue if invalid
@@ -431,8 +932,16 @@ void UExtraFunctionalityLibrary::ClearInputMappings(UInputSettings * const InSet
 		return;
 	}
 
-	InSettings->AxisMappings.Empty();
-	InSettings->ActionMappings.Empty();
+	// Clear action mappings
+	for (const FInputActionKeyMapping& Action : InSettings->GetActionMappings())
+	{
+		InSettings->RemoveActionMapping(Action, false);
+	}
+	// Clear axis mappings
+	for (const FInputAxisKeyMapping& Axis : InSettings->GetAxisMappings())
+	{
+		InSettings->RemoveAxisMapping(Axis, false);
+	}
 
 	if (bForceRebuildKeymaps)
 	{
@@ -463,6 +972,110 @@ bool UExtraFunctionalityLibrary::Equals_InputActionKeyMapping(FInputActionKeyMap
 	return (A == B);
 }
 
+EFocusCausedBy UExtraFunctionalityLibrary::GetFocusCauseFromEvent(const FFocusEvent & InEvent)
+{
+	EFocusCausedBy Cause = EFocusCausedBy::Cleared;
+
+	switch (InEvent.GetCause())
+	{
+	case EFocusCause::Cleared:
+	{
+		Cause = EFocusCausedBy::Cleared;
+		break;
+	}
+	case EFocusCause::Mouse:
+	{
+		Cause = EFocusCausedBy::Mouse;
+	}
+	case EFocusCause::Navigation:
+	{
+		Cause = EFocusCausedBy::Navigation;
+		break;
+	}
+	case EFocusCause::OtherWidgetLostFocus:
+	{
+		Cause = EFocusCausedBy::OtherWidgetLostFocus;
+		break;
+	}
+	case EFocusCause::SetDirectly:
+	{
+		Cause = EFocusCausedBy::SetDirectly;
+		break;
+	}
+	case EFocusCause::WindowActivate:
+	{
+		Cause = EFocusCausedBy::WindowActivate;
+		break;
+	}
+	default:
+		break;
+	}	
+	return Cause;
+}
+
+FString UExtraFunctionalityLibrary::FocusEventToString(const FFocusEvent& InEvent)
+{		
+	return GetEnumValueAsString<EFocusCausedBy>("EFocusCausedBy", GetFocusCauseFromEvent(InEvent));
+}
+
+UWidget * UExtraFunctionalityLibrary::GetWidgetInFocus()
+{
+	/** Iterates through all Widgets and checks for which one has user focus */
+	for (TObjectIterator<UWidget> Itr; Itr; ++Itr)
+	{
+		if (Itr->HasAnyUserFocus())
+		{
+			return *Itr;
+		}
+	}
+	return nullptr;
+}
+
+bool UExtraFunctionalityLibrary::GetSubWidgetInFocus(UUserWidget * ParentWidget, UWidget *& FoundWidget)
+{
+	// Handles reseting the variable because of BP
+	FoundWidget = nullptr;
+
+	if (ParentWidget)
+	{
+		// Loop through each widget in the widget tree
+		ParentWidget->WidgetTree->ForEachWidget([&](UWidget* Widget)
+		{
+			check(Widget); // If this widget is valid(which it should be) then we can continue
+		
+			if (!FoundWidget)
+			{
+				// If the widget has focus
+				if (Widget->HasAnyUserFocus())
+				{
+					FoundWidget = Widget;
+				}
+			}
+		});
+	}
+
+	return FoundWidget;
+}
+
+TArray<UWidget*> UExtraFunctionalityLibrary::GetAllSubWidgetsInParent(UUserWidget * ParentWidget)
+{
+	TArray<UWidget*> SubWidgets;
+	if (ParentWidget)
+	{
+		UWidgetTree::GetChildWidgets(ParentWidget, SubWidgets);
+	}
+	return SubWidgets;
+}
+
+void UExtraFunctionalityLibrary::ClearAllUserFocus()
+{
+	if (!FSlateApplication::IsInitialized())
+	{
+		return;
+	}
+	FSlateApplication::Get().ClearAllUserFocus();
+}
+
 void UExtraFunctionalityLibrary::GetAllWidgetsOfTypeInUserWidget(UUserWidget * ParentWidget, TSubclassOf<UWidget> WidgetClass, TArray<UWidget*>& FoundWidgets)
 {
 	FoundWidgets.Reset(); // Wipe the Found Widgets array
@@ -471,7 +1084,7 @@ void UExtraFunctionalityLibrary::GetAllWidgetsOfTypeInUserWidget(UUserWidget * P
 		return;
 	}
 
-	// Loop through each widget in the widget tree using a Lambda
+	// Loop through each widget in the widget tree
 	ParentWidget->WidgetTree->ForEachWidget([&](UWidget* Widget)
 	{
 		check(Widget); // If this widget is valid(which it should be) then we can continue
@@ -660,7 +1273,45 @@ UObject * UExtraFunctionalityLibrary::GetCurrentCheckboxImage(UCheckBox * InChec
 	return FoundImage;
 }
 
-UPrimitiveComponent * UExtraFunctionalityLibrary::GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, FVector Point, bool Inverse)
+bool UExtraFunctionalityLibrary::FindSceneComponentByName(AActor * ActorToSearchIn,
+	const FString & CompName, USceneComponent *& FoundComp)
+{
+	if (ActorToSearchIn && !CompName.IsEmpty())
+	{
+		for (UActorComponent* Comp : ActorToSearchIn->GetComponents())
+		{
+			if (USceneComponent* SComp = Cast<USceneComponent>(Comp))
+			{
+				if (GetNameSafe(SComp) == CompName)
+				{
+					FoundComp = SComp;
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool UExtraFunctionalityLibrary::FindActorComponentByName(AActor* ActorToSearchIn,
+	const FString & CompName, UActorComponent *& FoundComp)
+{
+	if (ActorToSearchIn && !CompName.IsEmpty())
+	{
+		for (UActorComponent* Comp : ActorToSearchIn->GetComponents())
+		{
+			if (GetNameSafe(Comp) == CompName)
+			{
+				FoundComp = Comp;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+UPrimitiveComponent * UExtraFunctionalityLibrary::GetClosestComponentToPoint(TArray<UPrimitiveComponent*> Comps, 
+	FVector Point, bool Inverse)
 {
 	UPrimitiveComponent* ClosestComp = nullptr;
 	float ClosestDistance = (Inverse) ? 0.0f : MAX_flt;
@@ -689,7 +1340,8 @@ UPrimitiveComponent * UExtraFunctionalityLibrary::GetClosestComponentToPoint(TAr
 	return ClosestComp;
 }
 
-AActor * UExtraFunctionalityLibrary::GetClosestActorToPoint(TArray<AActor*> Actors, FVector Point, bool Inverse)
+AActor * UExtraFunctionalityLibrary::GetClosestActorToPoint(TArray<AActor*> Actors, 
+	FVector Point, bool Inverse)
 {
 	AActor* ClosestActor = nullptr;
 	float ClosestDistance = (Inverse) ? 0.0f : MAX_flt;
@@ -866,7 +1518,7 @@ void UExtraFunctionalityLibrary::SnapAllSplinePointsToGround(USplineComponent* S
 	}
 }
 
-void UExtraFunctionalityLibrary::SnapSignleSplinePointToGround(USplineComponent * SplineComp,
+void UExtraFunctionalityLibrary::SnapSingleSplinePointToGround(USplineComponent * SplineComp,
 	int32 SplinePointToSnap, float TraceDistance, bool bTraceComplex, ETraceTypeQuery TraceChannel, 
 	const TArray<AActor*>& ActorsToIgnore, bool bDrawDebug, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawDebugTime)
 {
@@ -1006,6 +1658,82 @@ void UExtraFunctionalityLibrary::FindLocationAndRotationAtSplineInputKey(FVector
 	}	
 }
 
+TArray<USplineMeshComponent*> UExtraFunctionalityLibrary::BuildSplineMeshesAlongSpline(
+	USplineComponent* SplineComp, UStaticMesh* SplineMesh, 
+	TArray<UMaterialInterface*> OptionalMaterials,
+	UPARAM(ref) const FTransform& RelativeTransform,
+	TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis,
+	bool bAffectNavigation, bool bGenerateOverlapEvents,
+	TEnumAsByte<ECollisionEnabled::Type> CollisionEnabled, 
+	TEnumAsByte<EObjectTypeQuery> ObjectType,
+	EComponentMobility::Type Mobility,
+	FVector2D StartScale, FVector2D EndScale)
+{
+	if (!SplineComp || !SplineMesh)
+	{
+		return TArray<USplineMeshComponent*>();
+	}
+	TArray<USplineMeshComponent*> SplineMeshes;
+
+	if (UWorld* const World = SplineComp->GetWorld())
+	{
+		const ESplineCoordinateSpace::Type CoordinateSpace = ESplineCoordinateSpace::Local;
+		const int MaxSplines = (SplineComp->GetNumberOfSplinePoints() - 1);
+		for (int index = 0;
+			index < MaxSplines; index++)
+		{
+			if (!IsValidSplinePoint(SplineComp, index))
+			{
+				break;
+			}
+			USplineMeshComponent* MeshComp = NewObject<USplineMeshComponent>(SplineComp);
+			MeshComp->SetMobility(Mobility);						
+			if (MeshComp->GetAttachParent() != SplineComp)
+			{				
+				MeshComp->SetupAttachment(SplineComp);
+			}
+			MeshComp->SetRelativeTransform(RelativeTransform);
+			MeshComp->SetStartScale(StartScale);
+			MeshComp->SetEndScale(EndScale);
+			MeshComp->SetCanEverAffectNavigation(bAffectNavigation);
+			MeshComp->SetGenerateOverlapEvents(bGenerateOverlapEvents);
+			MeshComp->SetCollisionObjectType(UEngineTypes::ConvertToCollisionChannel(ObjectType));
+			MeshComp->SetCollisionEnabled(CollisionEnabled);
+			MeshComp->SetForwardAxis(ForwardAxis);				
+			MeshComp->SetStaticMesh(SplineMesh);
+
+			// Apply the materials
+			{
+				TArray<UMaterialInterface*> SplineMaterials = (OptionalMaterials.Num() > 0) ?
+					OptionalMaterials : GetStaticMaterials(SplineMesh);
+
+				if (SplineMaterials.Num() > 0)
+				{
+					for (int MatIndex = SplineMaterials.Num(); MatIndex-- > 0;)
+					{
+						// Valid check
+						if (SplineMaterials[MatIndex])
+						{
+							MeshComp->SetMaterial(MatIndex, SplineMaterials[MatIndex]);
+						}
+					}
+				}
+			}
+			const int NextIndex = (index + 1) % SplineComp->GetNumberOfSplinePoints();
+			MeshComp->SetStartAndEnd(
+				SplineComp->GetLocationAtSplinePoint(index, CoordinateSpace),
+				SplineComp->GetArriveTangentAtSplinePoint(index, CoordinateSpace),
+				SplineComp->GetLocationAtSplinePoint(NextIndex, CoordinateSpace),
+				SplineComp->GetArriveTangentAtSplinePoint(NextIndex, CoordinateSpace));
+
+			MeshComp->RegisterComponentWithWorld(World);
+			SplineMeshes.Add(MeshComp);
+		}
+	}
+	
+	return SplineMeshes;
+}
+
 void UExtraFunctionalityLibrary::StartRecordingReplay(const UObject* WorldContextObject, const FString & ReplayName,
 	const FString & FriendlyName)
 {
@@ -1111,7 +1839,7 @@ bool UExtraFunctionalityLibrary::IsReplayPaused(const UObject * WorldContextObje
 	{		
 		if (AWorldSettings* const Settings = World->GetWorldSettings())
 		{
-			return (Settings->Pauser);
+			return Settings->GetPauserPlayerState();			
 		}
 	}
 	return false;
@@ -1131,7 +1859,7 @@ void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObje
 	{					
 		AWorldSettings* const Settings = World->GetWorldSettings();
 
-		const bool IsPaused = Settings->Pauser;
+		const bool IsPaused = false;// Settings->Pauser;
 		if (IsPaused != NewState)
 		{				
 			UE_LOG(LogExtraFunctionalityLibrary, Display, TEXT("Changing replay pause state to: [%s]"), (NewState) ? TEXT("PAUSED") : TEXT("UN-PAUSED"));
@@ -1150,7 +1878,7 @@ void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObje
 				CVarAA->Set(1);
 				CVarMB->Set(0);
 
-				Settings->Pauser = World->GetFirstPlayerController()->PlayerState;
+				Settings->SetPauserPlayerState(World->GetFirstPlayerController()->PlayerState);				
 			}
 			// If we're unpausing
 			else
@@ -1158,8 +1886,8 @@ void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObje
 				// Reset motion blur and AA
 				CVarAA->Set(PreviousAASetting);
 				CVarMB->Set(PreviousMBSetting);
-
-				Settings->Pauser = NULL;
+				
+				Settings->SetPauserPlayerState(NULL);
 			}				
 		}		
 	}
