@@ -6,7 +6,7 @@
   "FriendlyName": "Extra Functionality",
   "Description": "Nick's dope extra functionality library yo!",
   "CreatedBy": "Nicholas Helish",    
-  "EngineVersion": "4.23",
+  "EngineVersion": "4.24",
   "EnabledByDefault": true,
   "CanContainContent": true,
 
