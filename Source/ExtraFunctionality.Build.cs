@@ -19,6 +19,7 @@ public class ExtraFunctionality : ModuleRules
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] {
+            "ApplicationCore",
             "HTTP",
             "NetworkReplayStreaming",
             "CoreUObject",

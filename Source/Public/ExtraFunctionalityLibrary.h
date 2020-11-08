@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Components/SplineComponent.h" // This is for the ESplineCoordinateSpace
-#include "Components/SplineMeshComponent.h" // This is for ESplineMeshAxis
 #include "GameFramework/PlayerInput.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "SlateCore/Public/Styling/SlateTypes.h"
@@ -35,12 +34,24 @@ class EXTRAFUNCTIONALITY_API UExtraFunctionalityLibrary : public UBlueprintFunct
 
 public:
 
-#pragma region Platform Checks
+#pragma region Platform Stuff
+
 
 	/** Shorthand function for checking what platform type this application is currently running on. */
 	UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Platform", 
 		meta = (Keywords = "type platform", ExpandEnumAsExecs = "Result"))
 		static void SwitchOnPlatformType(EPlatformType& Result);
+
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform")
+		static bool IsMobile();
+
+	/** Returns true if the game is running on a platform that requires a gamepad. (Desktop and Mobile do not require it but it is recommended to have support for it on those platforms) */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform")
+	static bool PlatformRequiresGamepad();
+
+	/** Returns the platform device's name */
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Platform")
+		static FString GetPlatformDeviceName();
 
 	/** 
 	* Returns the current platform type.
@@ -279,6 +290,12 @@ public:
 
 #pragma region String Stuff
 
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Strings")
+		static FString GetStringFromClipboard();
+
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Strings")
+		static void CopyToClipboard(const FString& ToClipboard);
+
 		/** Handles sorting an array of strings to be alphabetical */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Strings")
 		static TArray<FString> SortStrings(const TArray<FString> UnSortedStrings);
@@ -362,9 +379,26 @@ public:
 
 #pragma region Player Stuff
 
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+		static bool IsGamepadConnected();				
+
+		/** 
+		* Returns true if the local player has been set for this player controller. 
+		* Returns false for invalid player controller, or local player hasn't been set(suggest overriding function ReceivePlayer in player controller which happens after local player is set)
+		*/
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+		static bool HasValidLocalPlayer(APlayerController* InController);
+
 		/** Returns the input priority of the inputted actor, returns zero if actor is invalid. */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
 		static int GetInputPriority(AActor* InActor);
+
+		/** 
+		* Returns true if the pawn's input is enabled, false if otherwise. 
+		* To check for generic actors, it needs to be setup in the player controller by checking if it contains that actor's input component in the CurrentInputStack array in C++(because that variable is protected atm).
+		*/
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+		static bool IsPawnInputEnabled(APawn* InPawn);
 
 		/** Handles setting the input priority for the inputted actor. */
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library")
@@ -471,6 +505,12 @@ public:
 		static bool FindFirstInstanceOfActorType(const UObject* WorldContextObject, 
 			TSubclassOf<AActor> SearchClass, AActor*& FoundActor);
 
+		/** Attempts to find the component of class. */
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library", 
+			meta = (DeterminesOutputType = "ComponentClass", DynamicOutputParam = "FoundComponent", ExpandEnumAsExecs = "Result"))
+			static void FindComponentOfClass(AActor* InActor, 
+				TSubclassOf<UActorComponent> ComponentClass, UActorComponent*& FoundComponent, EExtraSwitch &Result);
+
 		/** Marks multiple inputted component's render state dirty. */
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library", meta = (DisplayName = "Mark Render Dirty (Array)"))
 		static void MarkRenderDity_Comps(TArray<USceneComponent*> InComps);
@@ -504,7 +544,19 @@ public:
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
 		static TArray<UMaterialInterface*> GetStaticMaterials(UStaticMesh* InMesh);
 
-#pragma region Input Settings Stuff						
+#pragma region Input Stuff
+
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Input")
+		static const FKeyEvent MakeKeyEvent(const int UserIndex, const FKey Key, const bool bIsRepeat);
+
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Input")
+		static const FPointerEvent MakePointerEvent(const int UserIndex, const int PointerIndex, 
+		const FVector2D ScreenSpacePosition, const FVector2D LastScreenSpacePosition, 
+		const bool bPressed, const float WheelDelta);
+
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Input")
+		static const FMotionEvent MakeMotionEvent(const int UserIndex, 
+		const FVector Tilt, const FVector RotationRate, const FVector Gravity, const FVector Acceleration);
 
 		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Input")
 		static void ClearInputMappings(UInputSettings* const InSettings, bool bForceRebuildKeymaps, bool bSaveKeyMappings);
@@ -514,76 +566,6 @@ public:
 
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Input", meta = (DisplayName = "Equal (Input Action Key Mapping)", CompactNodeTitle = "==", Keywords = "== equal"))
 		static bool Equals_InputActionKeyMapping(FInputActionKeyMapping A, FInputActionKeyMapping B, bool bNameOnly);
-
-#pragma endregion
-
-#pragma region Widget Stuff
-
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI", meta =
-			(CompactNodeTitle = "->", BlueprintAutocast))
-		static EFocusCausedBy GetFocusCauseFromEvent(const FFocusEvent& InEvent);
-
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI", meta = 
-			(CompactNodeTitle = "->", BlueprintAutocast))
-		static FString FocusEventToString(const FFocusEvent& InEvent);
-
-		/** Returns which widget is in focus. */
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI")
-		static UWidget* GetWidgetInFocus();
-
-		/** Handles getting the widget that is in focus within the parent widget, returns true if any widgets within the parent widget has focus. False for otherwise. */
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI")
-		static bool GetSubWidgetInFocus(UUserWidget* ParentWidget, UWidget* & FoundWidget);
-
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI")
-		static TArray<UWidget*> GetAllSubWidgetsInParent(UUserWidget* ParentWidget);
-
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI")
-		static void ClearAllUserFocus();
-
-		/** 
-		* Finds all widgets of type Widget Class in Parent Widget. 
-		* @param ParentWidget The widget to use as a parent, will look inside this widget's tree if it contains any widgets of WidgetClass.
-		* @param WidgetClass The widget class to search for inside ParentWidget's widget tree. Can return an empty array if none found.
-		*/
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI", 
-			meta = (DeterminesOutputType = "WidgetClass", DynamicOutputParam = "FoundWidgets"))
-		static void GetAllWidgetsOfTypeInUserWidget(UUserWidget* ParentWidget, TSubclassOf<UWidget> WidgetClass, TArray<UWidget*>& FoundWidgets);		
-
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI|Textblock")
-		static void SetFontFamily(UTextBlock* Target, UObject* NewFamily);
-
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI|Textblock")
-		static void SetFontMaterial(UTextBlock* Target, UObject* NewMaterial);
-
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI|Textblock")
-		static void SetFontOutline(UTextBlock* Target, FFontOutlineSettings NewOutline);
-
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI|Textblock")
-		static void SetFontTypeface(UTextBlock* Target, FName NewTypeface);
-
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|UI|Textblock")
-		static void SetFontSize(UTextBlock* Target, int NewSize);
-
-		/** Shorthand for getting the last child index in Target, returns -1 if no children in panel */
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI|Panel", meta = (CompactNodeTitle = "LAST INDEX"))
-		static int GetLastChildIndex(UPanelWidget* Target);
-
-		/** Returns true if Target is valid and InIndexToCheck is a valid index in Target's children */
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI|Panel")
-		static bool IsValidChildIndexInPanel(UPanelWidget* Target, int InIndexToCheck);
-
-		/** 
-		* Sets all images in the checkbox style state to InImage.
-		* @param StateToSet The state to modify. EX: If StateToSet = Checked, then sets Checked Image, Checked Hovered Image, and Checked Pressed Image's to InImage.
-		* @return Returns the modified style.
-		*/
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI")
-			static FCheckBoxStyle SetCheckboxStyleToImage(FCheckBoxStyle InStyle, UObject* InImage, ECheckBoxState StateToSet = ECheckBoxState::Checked);
-
-		/** Returns the current image being used in this checkbox. */
-		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|UI")
-			static UObject* GetCurrentCheckboxImage(UCheckBox* InCheckbox);
 
 #pragma endregion
 
@@ -634,6 +616,10 @@ public:
 				FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawDebugTime = 5.0f);
 
 #pragma region Spline Component Stuff
+
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Spline")
+			static float SetSplineMeshRelativeRoll(USplineComponent* SplineComp, 
+				const FRotator RelativeRotation, const float DistanceAlongSpline, const bool bReturnInRadians = false);
 
 		/** Returns true if InPoint is a valid spline point. False if otherwise. */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Spline")
@@ -708,18 +694,9 @@ public:
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library|Spline")
 			static void FindLocationAndRotationAtSplineInputKey(FVector& Location, FRotator& Rotation, USplineComponent* SplineComp, float InKey, ESplineCoordinateSpace::Type CoordinateSpace);
 
-		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Spline",
-			meta = (AutoCreateRefTerm = "OptionalMaterials, RelativeTransform"))
+		UFUNCTION(BlueprintCallable, Category = "Extra Functionality Library|Spline")
 			static TArray<USplineMeshComponent*> BuildSplineMeshesAlongSpline(
-			USplineComponent* SplineComp, UStaticMesh* SplineMesh,
-			TArray<UMaterialInterface*> OptionalMaterials,
-			UPARAM(ref) const FTransform& RelativeTransform,
-			TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis,
-			bool bAffectNavigation, bool bGenerateOverlapEvents,
-			TEnumAsByte<ECollisionEnabled::Type> CollisionEnabled,
-			TEnumAsByte<EObjectTypeQuery> ObjectType,
-			EComponentMobility::Type Mobility,
-			FVector2D StartScale = FVector2D(1.0f, 1.0f), FVector2D EndScale = FVector2D(1.0f, 1.0f));
+			USplineComponent* SplineComp, FExtraSplineConstructionInfo ConstructionInfo);
 
 #pragma endregion
 

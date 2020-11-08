@@ -292,3 +292,33 @@ FRotator UExtraMathLibrary::GridSnapRotation(FRotator Rotator, float GridDeg)
 	return out;
 }
 
+float UExtraMathLibrary::GetActorSurfaceArea(AActor * Target, const bool bUseOnlyCollidingComponents)
+{
+	if (!Target)
+	{
+		return 0.0f;
+	}
+
+	FVector Origin, BoxExtent;
+	Target->GetActorBounds(bUseOnlyCollidingComponents, Origin, BoxExtent);
+
+	const float BaseAreaExtent = (BoxExtent.X * BoxExtent.Y 
+		+ BoxExtent.Y * BoxExtent.Z 
+		+ BoxExtent.X * BoxExtent.Z); // Combine all the box extent's components together first to get 1/8th of the total surface area
+	return FMath::Max((float)((8 * BaseAreaExtent) / 10000), 0.0f); // Multiply by 8 to get the surface area but its in centimeter squared so divided by 1000.0f for Unreal units
+}
+
+float UExtraMathLibrary::GetComponentSurfaceArea(UPrimitiveComponent * Target)
+{
+	if (!Target)
+	{
+		return 0.0f;
+	}
+
+	const FVector BoxExtent = Target->Bounds.BoxExtent;
+	const float BaseAreaExtent = (BoxExtent.X * BoxExtent.Y
+		+ BoxExtent.Y * BoxExtent.Z
+		+ BoxExtent.X * BoxExtent.Z); // Combine all the box extent's components together first to get 1/8th of the total surface area
+	return FMath::Max((float)((8 * BaseAreaExtent) / 10000), 0.0f); // Multiply by 8 to get the surface area but its in centimeter squared so divided by 1000.0f for Unreal units
+}
+

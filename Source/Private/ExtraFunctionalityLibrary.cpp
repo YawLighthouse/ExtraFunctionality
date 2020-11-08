@@ -12,6 +12,7 @@
 #include "Engine/Classes/GameFramework/GameMode.h"
 #include "GenericPlatformMisc.h"
 #include "ExtraMathLibrary.h"
+#include "ExtraWidgetLibrary.h"
 #include "Framework/Application/SlateApplication.h"
 #include "HAL/FileManager.h"
 #include "GameFramework/InputSettings.h"
@@ -23,6 +24,7 @@
 #include "Engine/ObjectLibrary.h"
 #include "Paths.h"
 #include "Runtime/Engine/Classes/Engine/DemoNetDriver.h"
+#include "Runtime/ApplicationCore/Public/HAL/PlatformApplicationMisc.h"
 #include "UMG/Public/Components/CheckBox.h"
 #include "UMG/Public/Components/TextBlock.h"
 #include "UserWidget.h"
@@ -41,16 +43,39 @@ void UExtraFunctionalityLibrary::SwitchOnPlatformType(EPlatformType& Result)
 	Result = GetPlatformType();
 }
 
+bool UExtraFunctionalityLibrary::IsMobile()
+{
+#if (PLATFORM_ANDROID || PLATFORM_IOS)
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool UExtraFunctionalityLibrary::PlatformRequiresGamepad()
+{
+	if (GetPlatformType() == EPlatformType::PT_Console)
+	{
+		return true;
+	}
+	return false;
+}
+
+FString UExtraFunctionalityLibrary::GetPlatformDeviceName()
+{
+	return FPlatformMisc::GetDefaultDeviceProfileName();
+}
+
 EPlatformType UExtraFunctionalityLibrary::GetPlatformType()
 {
-#if PLATFORM_XBOXONE
-		return EPlatformType::XboxOne;
-#elif PLATFORM_PS4
-		return EPlatformType::PS4;
-#elif PLATFORM_SWITCH
-		return EPlatformType::Switch;
+#if (PLATFORM_XBOXONE || PLATFORM_PS4 || PLATFORM_SWITCH || PLATFORM_TVOS)
+		return EPlatformType::PT_Console;
+#elif  (PLATFORM_MAC || PLATFORM_WINDOWS || PLATFORM_LINUX || PLATFORM_DESKTOP)
+		return EPlatformType::PT_PC;
+#elif (PLATFORM_ANDROID || PLATFORM_IOS)
+		return EPlatformType::PT_Mobile;
 #else
-	return EPlatformType::Desktop;
+	return EPlatformType::PT_PC;
 #endif
 }
 
@@ -443,6 +468,18 @@ bool UExtraFunctionalityLibrary::GetObjectsOf(TSubclassOf<UObject> InType,
 	return (OutputObjects.Num() > 0);
 }
 
+FString UExtraFunctionalityLibrary::GetStringFromClipboard()
+{
+	FString FromClipboard;
+	FPlatformApplicationMisc::ClipboardCopy(*FromClipboard);
+	return FromClipboard;
+}
+
+void UExtraFunctionalityLibrary::CopyToClipboard(const FString& ToClipboard)
+{
+	FPlatformApplicationMisc::ClipboardCopy(*ToClipboard);
+}
+
 TArray<FString> UExtraFunctionalityLibrary::SortStrings(const TArray<FString> UnSortedStrings)
 {
 	TArray<FString> SortedStrings = UnSortedStrings;
@@ -600,14 +637,41 @@ FString UExtraFunctionalityLibrary::GetPlayerIP(const APlayerController* InPlaye
 	return FString();
 }
 
+bool UExtraFunctionalityLibrary::IsGamepadConnected()
+{
+	if (FSlateApplication::IsInitialized())
+	{
+		return FSlateApplication::Get().IsGamepadAttached();
+	}
+	return false;
+}
+
+bool UExtraFunctionalityLibrary::HasValidLocalPlayer(APlayerController * InController)
+{
+	if (InController)
+	{		
+		return (InController->GetLocalPlayer() != nullptr);
+	}
+	return false;
+}
+
 int UExtraFunctionalityLibrary::GetInputPriority(AActor* InActor)
 {
 	if (!InActor)
 	{
 		return 0;
 	}
-
+	
 	return InActor->InputPriority;
+}
+
+bool UExtraFunctionalityLibrary::IsPawnInputEnabled(APawn * InPawn)
+{
+	if (InPawn)
+	{
+		return InPawn->InputEnabled();
+	}
+	return false;
 }
 
 void UExtraFunctionalityLibrary::SetInputPriority(AActor* InActor, int NewInputPriority)
@@ -865,6 +929,20 @@ bool UExtraFunctionalityLibrary::FindFirstInstanceOfActorType(const UObject * Wo
 	return (FoundActor != nullptr);
 }
 
+void UExtraFunctionalityLibrary::FindComponentOfClass(AActor * InActor, TSubclassOf<UActorComponent> ComponentClass, UActorComponent *& FoundComponent, EExtraSwitch & Result)
+{
+	Result = EExtraSwitch::OnFailed;
+	FoundComponent = nullptr;
+	if (ComponentClass && InActor)
+	{
+		if (UActorComponent* Comp = InActor->GetComponentByClass(ComponentClass))
+		{
+			FoundComponent = Comp;
+			Result = EExtraSwitch::OnSucceeded;
+		}
+	}
+}
+
 void UExtraFunctionalityLibrary::MarkRenderDity_Comps(TArray<USceneComponent*> InComps)
 {
 	for (USceneComponent* Comp : InComps)
@@ -924,6 +1002,63 @@ TArray<UMaterialInterface*> UExtraFunctionalityLibrary::GetStaticMaterials(UStat
 	return Mats;
 }
 
+const FKeyEvent UExtraFunctionalityLibrary::MakeKeyEvent(const int UserIndex, const FKey Key, const bool bIsRepeat)
+{
+	if (FSlateApplication::IsInitialized())
+	{
+		return FKeyEvent(
+		Key, 
+		FSlateApplication::Get().GetModifierKeys(), 
+		UserIndex, 
+		bIsRepeat, 
+		0, 0); // Currently the slate application does not use character code or key code
+	}
+	return FKeyEvent(
+		Key,
+		FModifierKeysState(),
+		UserIndex,
+		bIsRepeat,
+		0, 0); // Currently the slate application does not use character code or key code
+}
+
+const FPointerEvent UExtraFunctionalityLibrary::MakePointerEvent(const int UserIndex, const int PointerIndex, 
+const FVector2D ScreenSpacePosition, const FVector2D LastScreenSpacePosition, 
+const bool bPressed, const float WheelDelta)
+{
+	if (FSlateApplication::IsInitialized())
+	{
+		FSlateApplication& SlateApp = FSlateApplication::Get();
+		
+		return FPointerEvent(
+		UserIndex, 
+		PointerIndex, 
+		ScreenSpacePosition, 
+		LastScreenSpacePosition, 
+		SlateApp.GetPressedMouseButtons(),
+		bPressed ? EKeys::LeftMouseButton : EKeys::Invalid,
+		WheelDelta,
+		SlateApp.GetPlatformApplication()->GetModifierKeys()
+		);
+	}
+
+	return FPointerEvent(
+	UserIndex, 
+	PointerIndex, 
+	ScreenSpacePosition, 
+	LastScreenSpacePosition,
+	TSet<FKey>(),
+	bPressed ? EKeys::LeftMouseButton : EKeys::Invalid,
+	WheelDelta,
+	FModifierKeysState()
+	);
+}
+
+const FMotionEvent UExtraFunctionalityLibrary::MakeMotionEvent(const int UserIndex, 
+const FVector Tilt, const FVector RotationRate, const FVector Gravity, const FVector Acceleration)
+{
+	return FMotionEvent(UserIndex, Tilt, RotationRate, Gravity, Acceleration);
+}
+
 void UExtraFunctionalityLibrary::ClearInputMappings(UInputSettings * const InSettings, bool bForceRebuildKeymaps, bool bSaveKeyMappings)
 {
 	// Dont continue if invalid
@@ -970,307 +1105,6 @@ bool UExtraFunctionalityLibrary::Equals_InputActionKeyMapping(FInputActionKeyMap
 		return (A.ActionName == B.ActionName);
 	}
 	return (A == B);
-}
-
-EFocusCausedBy UExtraFunctionalityLibrary::GetFocusCauseFromEvent(const FFocusEvent & InEvent)
-{
-	EFocusCausedBy Cause = EFocusCausedBy::Cleared;
-
-	switch (InEvent.GetCause())
-	{
-	case EFocusCause::Cleared:
-	{
-		Cause = EFocusCausedBy::Cleared;
-		break;
-	}
-	case EFocusCause::Mouse:
-	{
-		Cause = EFocusCausedBy::Mouse;
-	}
-	case EFocusCause::Navigation:
-	{
-		Cause = EFocusCausedBy::Navigation;
-		break;
-	}
-	case EFocusCause::OtherWidgetLostFocus:
-	{
-		Cause = EFocusCausedBy::OtherWidgetLostFocus;
-		break;
-	}
-	case EFocusCause::SetDirectly:
-	{
-		Cause = EFocusCausedBy::SetDirectly;
-		break;
-	}
-	case EFocusCause::WindowActivate:
-	{
-		Cause = EFocusCausedBy::WindowActivate;
-		break;
-	}
-	default:
-		break;
-	}	
-	return Cause;
-}
-
-FString UExtraFunctionalityLibrary::FocusEventToString(const FFocusEvent& InEvent)
-{		
-	return GetEnumValueAsString<EFocusCausedBy>("EFocusCausedBy", GetFocusCauseFromEvent(InEvent));
-}
-
-UWidget * UExtraFunctionalityLibrary::GetWidgetInFocus()
-{
-	/** Iterates through all Widgets and checks for which one has user focus */
-	for (TObjectIterator<UWidget> Itr; Itr; ++Itr)
-	{
-		if (Itr->HasAnyUserFocus())
-		{
-			return *Itr;
-		}
-	}
-	return nullptr;
-}
-
-bool UExtraFunctionalityLibrary::GetSubWidgetInFocus(UUserWidget * ParentWidget, UWidget *& FoundWidget)
-{
-	// Handles reseting the variable because of BP
-	FoundWidget = nullptr;
-
-	if (ParentWidget)
-	{
-		// Loop through each widget in the widget tree
-		ParentWidget->WidgetTree->ForEachWidget([&](UWidget* Widget)
-		{
-			check(Widget); // If this widget is valid(which it should be) then we can continue
-		
-			if (!FoundWidget)
-			{
-				// If the widget has focus
-				if (Widget->HasAnyUserFocus())
-				{
-					FoundWidget = Widget;
-				}
-			}
-		});
-	}
-
-	return FoundWidget;
-}
-
-TArray<UWidget*> UExtraFunctionalityLibrary::GetAllSubWidgetsInParent(UUserWidget * ParentWidget)
-{
-	TArray<UWidget*> SubWidgets;
-	if (ParentWidget)
-	{
-		UWidgetTree::GetChildWidgets(ParentWidget, SubWidgets);
-	}
-	return SubWidgets;
-}
-
-void UExtraFunctionalityLibrary::ClearAllUserFocus()
-{
-	if (!FSlateApplication::IsInitialized())
-	{
-		return;
-	}
-	FSlateApplication::Get().ClearAllUserFocus();
-}
-
-void UExtraFunctionalityLibrary::GetAllWidgetsOfTypeInUserWidget(UUserWidget * ParentWidget, TSubclassOf<UWidget> WidgetClass, TArray<UWidget*>& FoundWidgets)
-{
-	FoundWidgets.Reset(); // Wipe the Found Widgets array
-	if (!ParentWidget)
-	{
-		return;
-	}
-
-	// Loop through each widget in the widget tree
-	ParentWidget->WidgetTree->ForEachWidget([&](UWidget* Widget)
-	{
-		check(Widget); // If this widget is valid(which it should be) then we can continue
-
-		// If the widget's class is of type WidgetClass
-		if (Widget->IsA(WidgetClass))
-		{
-			// Then we found one of those widget's we're looking for
-			FoundWidgets.Add(Widget);
-		}
-	});
-}
-
-void UExtraFunctionalityLibrary::SetFontFamily(UTextBlock * Target, UObject * NewFamily)
-{
-	if (Target)
-	{
-		FSlateFontInfo TempFont = Target->Font;		
-		TempFont.FontObject = NewFamily;
-		Target->SetFont(TempFont);
-	}
-}
-
-void UExtraFunctionalityLibrary::SetFontMaterial(UTextBlock * Target, UObject * NewMaterial)
-{
-	if (Target)
-	{
-		FSlateFontInfo TempFont = Target->Font;
-		TempFont.FontMaterial = NewMaterial;
-		Target->SetFont(TempFont);
-	}
-}
-
-void UExtraFunctionalityLibrary::SetFontOutline(UTextBlock * Target, FFontOutlineSettings NewOutline)
-{
-	if (Target)
-	{
-		FSlateFontInfo TempFont = Target->Font;
-		TempFont.OutlineSettings = NewOutline;
-		Target->SetFont(TempFont);
-	}
-}
-
-void UExtraFunctionalityLibrary::SetFontTypeface(UTextBlock * Target, FName NewTypeface)
-{
-	if (Target && !NewTypeface.IsNone())
-	{		
-		FSlateFontInfo TempFont = Target->Font;
-		TempFont.TypefaceFontName = NewTypeface;
-		Target->SetFont(TempFont);
-	}
-}
-
-void UExtraFunctionalityLibrary::SetFontSize(UTextBlock * Target, int NewSize)
-{
-	if (Target)
-	{
-		FSlateFontInfo TempFont = Target->Font;
-		// Keeps it within the allowed bounds
-		TempFont.Size = FMath::Clamp(NewSize, 1, 1000);
-		Target->SetFont(TempFont);
-	}
-}
-
-int UExtraFunctionalityLibrary::GetLastChildIndex(UPanelWidget * Target)
-{
-	if (!Target)
-	{
-		return -1;
-	}
-
-	return Target->GetChildrenCount() - 1;
-}
-
-bool UExtraFunctionalityLibrary::IsValidChildIndexInPanel(UPanelWidget * Target, int InIndexToCheck)
-{
-	if (!Target)
-	{
-		return false;
-	}
-
-	const int ChildCount = (Target->GetChildrenCount() - 1);
-	return (ChildCount >= InIndexToCheck && InIndexToCheck >= 0); // As long as child count is greater than/equal to Index AND Index is greater than/equal to zero
-}
-
-FCheckBoxStyle UExtraFunctionalityLibrary::SetCheckboxStyleToImage(FCheckBoxStyle InStyle, UObject * InImage, ECheckBoxState StateToSet)
-{
-	if (!InImage)
-	{
-		return InStyle;
-	}
-
-	FSlateBrush Brush;
-	Brush.SetResourceObject(InImage);
-
-	switch (StateToSet)
-	{
-	case ECheckBoxState::Unchecked:
-	{
-		InStyle.SetUncheckedHoveredImage(Brush);
-		InStyle.SetUncheckedImage(Brush);
-		InStyle.SetUncheckedPressedImage(Brush);
-		break;
-	}
-	case ECheckBoxState::Checked:
-	{
-		InStyle.SetCheckedHoveredImage(Brush);
-		InStyle.SetCheckedImage(Brush);
-		InStyle.SetCheckedPressedImage(Brush);
-		break;
-	}
-	case ECheckBoxState::Undetermined:
-	default:
-	{
-		InStyle.SetUndeterminedHoveredImage(Brush);
-		InStyle.SetUndeterminedImage(Brush);
-		InStyle.SetUndeterminedPressedImage(Brush);
-		break;
-	}
-	}
-
-	return InStyle;
-}
-
-UObject * UExtraFunctionalityLibrary::GetCurrentCheckboxImage(UCheckBox * InCheckbox)
-{
-	if (!InCheckbox)
-	{
-		return nullptr;
-	}
-
-	UObject* FoundImage = nullptr;
-	switch (InCheckbox->GetCheckedState())
-	{
-	case ECheckBoxState::Unchecked:
-	{
-		if (InCheckbox->IsHovered())
-		{
-			FoundImage = InCheckbox->WidgetStyle.UncheckedHoveredImage.GetResourceObject();
-		}
-		else if (InCheckbox->IsPressed())
-		{
-			FoundImage = InCheckbox->WidgetStyle.UncheckedPressedImage.GetResourceObject();
-		}
-		else
-		{
-			FoundImage = InCheckbox->WidgetStyle.UncheckedImage.GetResourceObject();
-		}
-		break;
-	}
-	case ECheckBoxState::Checked:
-	{
-		if (InCheckbox->IsHovered())
-		{
-			FoundImage = InCheckbox->WidgetStyle.CheckedHoveredImage.GetResourceObject();
-		}
-		else if (InCheckbox->IsPressed())
-		{
-			FoundImage = InCheckbox->WidgetStyle.CheckedPressedImage.GetResourceObject();
-		}
-		else
-		{
-			FoundImage = InCheckbox->WidgetStyle.CheckedImage.GetResourceObject();
-		}
-		break;
-	}
-	case ECheckBoxState::Undetermined:
-	default:
-	{
-		if (InCheckbox->IsHovered())
-		{
-			FoundImage = InCheckbox->WidgetStyle.UndeterminedHoveredImage.GetResourceObject();
-		}
-		else if (InCheckbox->IsPressed())
-		{
-			FoundImage = InCheckbox->WidgetStyle.UndeterminedPressedImage.GetResourceObject();
-		}
-		else
-		{
-			FoundImage = InCheckbox->WidgetStyle.UndeterminedImage.GetResourceObject();
-		}
-		break;
-	}
-	}
-
-	return FoundImage;
 }
 
 bool UExtraFunctionalityLibrary::FindSceneComponentByName(AActor * ActorToSearchIn,
@@ -1442,6 +1276,23 @@ bool UExtraFunctionalityLibrary::SnapActorToGround(AActor * InActor, float Trace
 		}
 	}
 	return false;
+}
+
+float UExtraFunctionalityLibrary::SetSplineMeshRelativeRoll(USplineComponent* SplineComp, 
+	const FRotator RelativeRotation, const float DistanceAlongSpline, const bool bReturnInRadians)
+{
+	if (!SplineComp)
+	{
+		return 0.0f;
+	}
+	const ESplineCoordinateSpace::Type Coordinate = ESplineCoordinateSpace::Local;
+	const FVector Forward = RelativeRotation.UnrotateVector(SplineComp->GetDirectionAtDistanceAlongSpline(DistanceAlongSpline, Coordinate)).GetSafeNormal();
+	const FVector Right = RelativeRotation.UnrotateVector(SplineComp->GetRightVectorAtDistanceAlongSpline(DistanceAlongSpline, Coordinate)).GetSafeNormal();
+	const FVector Up = RelativeRotation.UnrotateVector(SplineComp->GetUpVectorAtDistanceAlongSpline(DistanceAlongSpline, Coordinate)).GetSafeNormal();
+
+	// Make rotation from axes, then get the roll from it
+	const float Roll = FMatrix(Forward, Right, Up, FVector::ZeroVector).Rotator().Roll;
+	return (bReturnInRadians ? FMath::DegreesToRadians(Roll) : Roll);
 }
 
 bool UExtraFunctionalityLibrary::IsValidSplinePoint(USplineComponent* SplineComp, int32 InPoint)
@@ -1659,17 +1510,9 @@ void UExtraFunctionalityLibrary::FindLocationAndRotationAtSplineInputKey(FVector
 }
 
 TArray<USplineMeshComponent*> UExtraFunctionalityLibrary::BuildSplineMeshesAlongSpline(
-	USplineComponent* SplineComp, UStaticMesh* SplineMesh, 
-	TArray<UMaterialInterface*> OptionalMaterials,
-	UPARAM(ref) const FTransform& RelativeTransform,
-	TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis,
-	bool bAffectNavigation, bool bGenerateOverlapEvents,
-	TEnumAsByte<ECollisionEnabled::Type> CollisionEnabled, 
-	TEnumAsByte<EObjectTypeQuery> ObjectType,
-	EComponentMobility::Type Mobility,
-	FVector2D StartScale, FVector2D EndScale)
+	USplineComponent* SplineComp, FExtraSplineConstructionInfo ConstructionInfo)
 {
-	if (!SplineComp || !SplineMesh)
+	if (!SplineComp || !ConstructionInfo.SplineMesh)
 	{
 		return TArray<USplineMeshComponent*>();
 	}
@@ -1677,36 +1520,53 @@ TArray<USplineMeshComponent*> UExtraFunctionalityLibrary::BuildSplineMeshesAlong
 
 	if (UWorld* const World = SplineComp->GetWorld())
 	{
-		const ESplineCoordinateSpace::Type CoordinateSpace = ESplineCoordinateSpace::Local;
-		const int MaxSplines = (SplineComp->GetNumberOfSplinePoints() - 1);
-		for (int index = 0;
-			index < MaxSplines; index++)
+		// Base the up vector for each spline point
+		for (int32 index = 0; index < (SplineComp->GetNumberOfSplinePoints() - 1); index++)
 		{
 			if (!IsValidSplinePoint(SplineComp, index))
 			{
 				break;
-			}
+			}			
+			SplineComp->SetUpVectorAtSplinePoint(index, 
+				FRotationMatrix(
+					SplineComp->GetRotationAtSplinePoint(index, ESplineCoordinateSpace::World)).GetScaledAxis(EAxis::Z), 
+				ESplineCoordinateSpace::World);
+		}
+
+		const int32 SplineEndAmount = (FMath::TruncToInt(SplineComp->GetSplineLength() / ConstructionInfo.SplineTileLength) + 1);
+		const ESplineCoordinateSpace::Type CoordinateSpace = ESplineCoordinateSpace::Local;		
+
+		// Construct the spline meshes
+		for (int32 index = 0; index < SplineEndAmount; index++)
+		{			
+			// Setup the values to set for the spline meshes
+			const float CurrentDistance = index * ConstructionInfo.SplineTileLength;
+			const float NextDistance = FMath::Clamp((index + 1) * ConstructionInfo.SplineTileLength, 0.0f, SplineComp->GetSplineLength());
+			const float MidPointSplineDistance = (CurrentDistance + NextDistance) * 0.5f;
+			const float CurrentTileLength = NextDistance - CurrentDistance;
+
+			// Create component and set default values for it
 			USplineMeshComponent* MeshComp = NewObject<USplineMeshComponent>(SplineComp);
-			MeshComp->SetMobility(Mobility);						
+			MeshComp->SetMobility(ConstructionInfo.Mobility);
 			if (MeshComp->GetAttachParent() != SplineComp)
 			{				
 				MeshComp->SetupAttachment(SplineComp);
 			}
-			MeshComp->SetRelativeTransform(RelativeTransform);
-			MeshComp->SetStartScale(StartScale);
-			MeshComp->SetEndScale(EndScale);
-			MeshComp->SetCanEverAffectNavigation(bAffectNavigation);
-			MeshComp->SetGenerateOverlapEvents(bGenerateOverlapEvents);
-			MeshComp->SetCollisionObjectType(UEngineTypes::ConvertToCollisionChannel(ObjectType));
-			MeshComp->SetCollisionEnabled(CollisionEnabled);
-			MeshComp->SetForwardAxis(ForwardAxis);				
-			MeshComp->SetStaticMesh(SplineMesh);
-
+			MeshComp->SetRelativeTransform(FTransform());
+			MeshComp->SetStartScale(ConstructionInfo.StartScale, false);
+			MeshComp->SetEndScale(ConstructionInfo.EndScale, false);
+			MeshComp->SetCanEverAffectNavigation(ConstructionInfo.bAffectNavigation);
+			MeshComp->SetGenerateOverlapEvents(ConstructionInfo.bGenerateOverlapEvents);
+			MeshComp->SetCollisionObjectType(UEngineTypes::ConvertToCollisionChannel(ConstructionInfo.ObjectType));
+			MeshComp->SetCollisionEnabled(ConstructionInfo.CollisionEnabled);
+			MeshComp->SetForwardAxis(ConstructionInfo.ForwardAxis, false);
+			MeshComp->SetStaticMesh(ConstructionInfo.SplineMesh);
+			
 			// Apply the materials
 			{
-				TArray<UMaterialInterface*> SplineMaterials = (OptionalMaterials.Num() > 0) ?
-					OptionalMaterials : GetStaticMaterials(SplineMesh);
-
+				TArray<UMaterialInterface*> SplineMaterials = (ConstructionInfo.OptionalMaterials.Num() > 0) ?
+					ConstructionInfo.OptionalMaterials : GetStaticMaterials(ConstructionInfo.SplineMesh);
+			
 				if (SplineMaterials.Num() > 0)
 				{
 					for (int MatIndex = SplineMaterials.Num(); MatIndex-- > 0;)
@@ -1719,15 +1579,60 @@ TArray<USplineMeshComponent*> UExtraFunctionalityLibrary::BuildSplineMeshesAlong
 					}
 				}
 			}
-			const int NextIndex = (index + 1) % SplineComp->GetNumberOfSplinePoints();
-			MeshComp->SetStartAndEnd(
-				SplineComp->GetLocationAtSplinePoint(index, CoordinateSpace),
-				SplineComp->GetArriveTangentAtSplinePoint(index, CoordinateSpace),
-				SplineComp->GetLocationAtSplinePoint(NextIndex, CoordinateSpace),
-				SplineComp->GetArriveTangentAtSplinePoint(NextIndex, CoordinateSpace));
+			MeshComp->SetSplineUpDir(
+				FRotationMatrix(
+					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, CoordinateSpace)).GetScaledAxis(EAxis::Z), 
+				false);
 
+			// Set start & end
+			{
+				const FVector SplineStartTangent = SplineComp->GetTangentAtDistanceAlongSpline(CurrentDistance, CoordinateSpace);
+				const FVector StartTangent = SplineStartTangent.GetSafeNormal() * FMath::Min(SplineStartTangent.Size(), CurrentTileLength);
+
+				const FVector SplineEndTangent = SplineComp->GetTangentAtDistanceAlongSpline(NextDistance, CoordinateSpace);
+				const FVector EndTangent = SplineEndTangent.GetSafeNormal() * FMath::Min(SplineEndTangent.Size(), CurrentTileLength);
+
+				MeshComp->SetStartAndEnd(SplineComp->GetLocationAtDistanceAlongSpline(CurrentDistance, CoordinateSpace), StartTangent,
+					SplineComp->GetLocationAtDistanceAlongSpline(NextDistance, CoordinateSpace), EndTangent, false);
+			}
+			
+			// Set starting roll
+			{
+				const float CorrectedRoll = UExtraFunctionalityLibrary::SetSplineMeshRelativeRoll(SplineComp,
+					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, CoordinateSpace), CurrentDistance, true);
+				MeshComp->SetStartRoll(CorrectedRoll, false);
+			}
+
+			// Set end roll
+			{
+				const float CorrectedRoll = UExtraFunctionalityLibrary::SetSplineMeshRelativeRoll(SplineComp,
+					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, CoordinateSpace), NextDistance, true);
+				MeshComp->SetEndRoll(CorrectedRoll, false);
+			}
+
+			MeshComp->UpdateMesh();
 			MeshComp->RegisterComponentWithWorld(World);
 			SplineMeshes.Add(MeshComp);
+
+			if (ConstructionInfo.bDebugMode)
+			{				
+				const FVector StartLoc = (SplineComp->GetLocationAtDistanceAlongSpline(MidPointSplineDistance, ESplineCoordinateSpace::World));
+				const FRotator BaseRotation = (SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, ESplineCoordinateSpace::World));
+				const float Length = ConstructionInfo.ArrowLength;
+				const float Size = ConstructionInfo.ArrowSize;
+				const float Thickness = ConstructionInfo.ArrowThickness;
+				const float DisplayTime = ConstructionInfo.DebugTime;
+
+				// X
+				DrawDebugDirectionalArrow(World, StartLoc, StartLoc + (FRotationMatrix(BaseRotation).GetScaledAxis(EAxis::X) * Length),
+					Size, FColor::Red, false, DisplayTime, SDPG_World, Thickness);
+				// Y
+				DrawDebugDirectionalArrow(World, StartLoc, StartLoc + (FRotationMatrix(BaseRotation).GetScaledAxis(EAxis::Y) * Length),
+					Size, FColor::Green, false, DisplayTime, SDPG_World, Thickness);
+				// Z
+				DrawDebugDirectionalArrow(World, StartLoc, StartLoc + (FRotationMatrix(BaseRotation).GetScaledAxis(EAxis::Z) * Length),
+					Size, FColor::Blue, false, DisplayTime, SDPG_World, Thickness);
+			}
 		}
 	}
 	
