@@ -149,6 +149,12 @@ public:
 
 #pragma endregion
 
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+	static float GetActorSurfaceArea(AActor* Target, const bool bUseOnlyCollidingComponents);
+
+	UFUNCTION(BlueprintPure, Category = "Extra Functionality Library")
+	static float GetComponentSurfaceArea(UPrimitiveComponent* Target);
+
 };
 
 

@@ -1,11 +1,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SplineComponent.h" 
+#include "Components/SplineMeshComponent.h"
 #include "EngineMinimal.h"
 #include "Engine/EngineTypes.h"
 #include "Blueprint/UserWidget.h"
 #include "UObject/NoExportTypes.h"
+#include "Runtime/Core/Public/Containers/EnumAsByte.h"
 #include "ExtraDataTypes.generated.h"
+
+class UStaticMesh;
+class UMaterialInterface;
 
 template<typename TEnum>
 static FORCEINLINE FString GetEnumValueAsString(const FString& Name, TEnum Value, const bool bUseFullValueName=false)
@@ -54,14 +60,12 @@ enum class EExtraSwitch : uint8
 UENUM(BlueprintType)
 enum class EPlatformType : uint8
 {
-	/** Xbox One */
-	XboxOne UMETA(DisplayName = "Xbox One"),
-	/** Playstation 4*/
-	PS4 UMETA(DisplayName = "PS4"),
-	/** Nintendo Switch */
-	Switch UMETA(DisplayName = "Switch"),
-	/** Windows, Mac, or Linux */
-	Desktop UMETA(DisplayName = "Desktop")
+	// IOS & Android
+	PT_Mobile UMETA(DisplayName = "Mobile"),
+	// Xbox, Switch, PS4
+	PT_Console UMETA(DisplayName = "Console"),
+	// Personal Computer like Mac, Windows, Linux
+	PT_PC UMETA(DisplayName = "Personal Computer")
 };
 
 UENUM(BlueprintType)
@@ -85,3 +89,49 @@ enum class EFocusCausedBy : uint8
 	/** Focus was set in response to the owning window being activated. */
 	WindowActivate			UMETA(DisplayName = "Window Activate")
 };
+
+USTRUCT(BlueprintType)
+struct FExtraSplineConstructionInfo
+{
+	GENERATED_BODY()
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction")
+	UStaticMesh* SplineMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction")
+	TArray<UMaterialInterface*> OptionalMaterials;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction", meta = (ClampMin = 1.0f))
+	float SplineTileLength;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction")
+	FVector2D StartScale;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction")
+	FVector2D EndScale;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction")
+	TEnumAsByte<ESplineMeshAxis::Type> ForwardAxis;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Collision")
+	uint8 bAffectNavigation : 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Collision")
+	uint8 bGenerateOverlapEvents : 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Collision")
+	TEnumAsByte<ECollisionEnabled::Type> CollisionEnabled;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Collision")
+	TEnumAsByte<EObjectTypeQuery> ObjectType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Collision")
+	TEnumAsByte<EComponentMobility::Type> Mobility;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Debug")
+	uint8 bDebugMode : 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Debug", meta = (ClampMin = 0.0f))
+		float ArrowLength;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Debug", meta = (ClampMin = 0.0f))
+		float ArrowSize;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Debug", meta = (ClampMin = 0.0f))
+		float ArrowThickness;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spline Construction|Debug", meta = (ClampMin = 0.0f))
+		float DebugTime;
+
+	FExtraSplineConstructionInfo();
+
+};
+
