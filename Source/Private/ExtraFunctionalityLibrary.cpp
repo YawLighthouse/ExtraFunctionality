@@ -1,6 +1,7 @@
 
 
 #include "ExtraFunctionalityLibrary.h"
+#include "AudioDeviceManager.h"
 #include "AudioDevice.h"
 #include "Components/SceneComponent.h"
 #include "Components/Widget.h"
@@ -284,9 +285,13 @@ void UExtraFunctionalityLibrary::SetGlobalVolume(UObject * WorldContextObject, f
 	{
 		if(UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 		{
-			if (FAudioDevice* AudioDevice = World->GetAudioDevice())
+			FAudioDeviceHandle Handle = World->GetAudioDevice();
+			if(Handle.IsValid())
 			{
-				AudioDevice->SetTransientMasterVolume(FMath::Max(InAmount, 0.0f));
+				if (FAudioDevice* AudioDevice = Handle.GetAudioDevice())
+				{
+					AudioDevice->SetTransientMasterVolume(FMath::Max(InAmount, 0.0f));
+				}
 			}
 		}
 	}
@@ -1676,7 +1681,7 @@ bool UExtraFunctionalityLibrary::IsReplayCurrentlyActive(const UObject * WorldCo
 {
 	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
-		return World->DemoNetDriver;
+		return World->DemoNetDriver != nullptr;
 	}
 	return false;
 }
@@ -1744,7 +1749,7 @@ bool UExtraFunctionalityLibrary::IsReplayPaused(const UObject * WorldContextObje
 	{		
 		if (AWorldSettings* const Settings = World->GetWorldSettings())
 		{
-			return Settings->GetPauserPlayerState();			
+			return Settings->GetPauserPlayerState() != nullptr;			
 		}
 	}
 	return false;
