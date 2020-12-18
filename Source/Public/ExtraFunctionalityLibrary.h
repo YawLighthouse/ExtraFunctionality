@@ -536,6 +536,10 @@ public:
 		static float GetAxisValueOfInputs(const APlayerController* InPlayerController, 
 			const FKey PositiveKey, const FKey NegativeKey);
 
+		/** Returns the float value at the inputted time inside a runtime curve */
+		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library", meta = (DisplayName = "Get Float Value (Runtime Curve)"))
+		static float GetFloatValue_RuntimeCurve(UPARAM(ref) const FRuntimeFloatCurve& Curve, const float InTime);
+
 		/** Shorthand function for getting the last index of material array in Primitive Component. RETURNS -1 IF TARGET IS INVALID */
 		UFUNCTION(BlueprintPure, Category = "Extra Functionality Library", meta = (CompactNodeTitle = "LAST INDEX"))
 		static int GetLastMaterialIndex(UPrimitiveComponent* Target);

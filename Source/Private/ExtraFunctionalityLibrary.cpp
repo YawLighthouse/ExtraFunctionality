@@ -982,6 +982,15 @@ float UExtraFunctionalityLibrary::GetAxisValueOfInputs(const APlayerController *
 	return ((float)InPlayerController->IsInputKeyDown(NegativeKey) * -1.0) + (float)InPlayerController->IsInputKeyDown(PositiveKey);
 }
 
+float UExtraFunctionalityLibrary::GetFloatValue_RuntimeCurve(const FRuntimeFloatCurve& Curve, const float InTime)
+{
+	if (const FRichCurve* RichCurve = Curve.GetRichCurveConst())
+	{		
+		return RichCurve->Eval(InTime);
+	}
+	return 0.0f;
+}
+
 int UExtraFunctionalityLibrary::GetLastMaterialIndex(UPrimitiveComponent * Target)
 {
 	if (!Target)
