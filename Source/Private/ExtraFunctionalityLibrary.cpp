@@ -586,7 +586,7 @@ FString UExtraFunctionalityLibrary::RemoveSpaces(FString SourceString)
 
 TArray<FString> UExtraFunctionalityLibrary::GetConnectedClientIPs(const UObject * WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull))
 	{
 		if (World->GetNetDriver() && World->GetNetMode() != NM_Client)
 		{
@@ -616,7 +616,7 @@ FString UExtraFunctionalityLibrary::GetServerIpFromGamemode(AGameMode * InGamemo
 
 FString UExtraFunctionalityLibrary::GetServerIP(const UObject * WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::ReturnNull))
 	{
 		if (World->GetNetDriver() && World->GetNetMode() == NM_Client)
 		{
@@ -916,7 +916,7 @@ bool UExtraFunctionalityLibrary::FindFirstInstanceOfActorType(const UObject * Wo
 		return false;
 	}
 	// Get the world to iterate through
-	else if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		// Loop through each actor in the world that is the same class as search class
 		for (TActorIterator<AActor> ActorItr(World, SearchClass); ActorItr; ++ActorItr)
@@ -1548,7 +1548,6 @@ TArray<USplineMeshComponent*> UExtraFunctionalityLibrary::BuildSplineMeshesAlong
 		}
 
 		const int32 SplineEndAmount = (FMath::TruncToInt(SplineComp->GetSplineLength() / ConstructionInfo.SplineTileLength) + 1);
-		const ESplineCoordinateSpace::Type CoordinateSpace = ESplineCoordinateSpace::Local;		
 
 		// Construct the spline meshes
 		for (int32 index = 0; index < SplineEndAmount; index++)
@@ -1595,32 +1594,32 @@ TArray<USplineMeshComponent*> UExtraFunctionalityLibrary::BuildSplineMeshesAlong
 			}
 			MeshComp->SetSplineUpDir(
 				FRotationMatrix(
-					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, CoordinateSpace)).GetScaledAxis(EAxis::Z), 
+					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, ESplineCoordinateSpace::Local)).GetScaledAxis(EAxis::Z), 
 				false);
 
 			// Set start & end
 			{
-				const FVector SplineStartTangent = SplineComp->GetTangentAtDistanceAlongSpline(CurrentDistance, CoordinateSpace);
+				const FVector SplineStartTangent = SplineComp->GetTangentAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::Local);
 				const FVector StartTangent = SplineStartTangent.GetSafeNormal() * FMath::Min(SplineStartTangent.Size(), CurrentTileLength);
 
-				const FVector SplineEndTangent = SplineComp->GetTangentAtDistanceAlongSpline(NextDistance, CoordinateSpace);
+				const FVector SplineEndTangent = SplineComp->GetTangentAtDistanceAlongSpline(NextDistance, ESplineCoordinateSpace::Local);
 				const FVector EndTangent = SplineEndTangent.GetSafeNormal() * FMath::Min(SplineEndTangent.Size(), CurrentTileLength);
 
-				MeshComp->SetStartAndEnd(SplineComp->GetLocationAtDistanceAlongSpline(CurrentDistance, CoordinateSpace), StartTangent,
-					SplineComp->GetLocationAtDistanceAlongSpline(NextDistance, CoordinateSpace), EndTangent, false);
+				MeshComp->SetStartAndEnd(SplineComp->GetLocationAtDistanceAlongSpline(CurrentDistance, ESplineCoordinateSpace::Local), StartTangent,
+					SplineComp->GetLocationAtDistanceAlongSpline(NextDistance, ESplineCoordinateSpace::Local), EndTangent, false);
 			}
 			
 			// Set starting roll
 			{
 				const float CorrectedRoll = UExtraFunctionalityLibrary::SetSplineMeshRelativeRoll(SplineComp,
-					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, CoordinateSpace), CurrentDistance, true);
+					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, ESplineCoordinateSpace::Local), CurrentDistance, true);
 				MeshComp->SetStartRoll(CorrectedRoll, false);
 			}
 
 			// Set end roll
 			{
 				const float CorrectedRoll = UExtraFunctionalityLibrary::SetSplineMeshRelativeRoll(SplineComp,
-					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, CoordinateSpace), NextDistance, true);
+					SplineComp->GetRotationAtDistanceAlongSpline(MidPointSplineDistance, ESplineCoordinateSpace::Local), NextDistance, true);
 				MeshComp->SetEndRoll(CorrectedRoll, false);
 			}
 
@@ -1656,7 +1655,7 @@ TArray<USplineMeshComponent*> UExtraFunctionalityLibrary::BuildSplineMeshesAlong
 void UExtraFunctionalityLibrary::StartRecordingReplay(const UObject* WorldContextObject, const FString & ReplayName,
 	const FString & FriendlyName)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{						
 		if(UGameInstance* const Gi = World->GetGameInstance())
 		{
@@ -1672,7 +1671,7 @@ void UExtraFunctionalityLibrary::StartRecordingReplay(const UObject* WorldContex
 
 void UExtraFunctionalityLibrary::StopRecordingReplay(const UObject* WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{		
 		if (UGameInstance* const Gi = World->GetGameInstance())
 		{
@@ -1688,23 +1687,22 @@ void UExtraFunctionalityLibrary::StopRecordingReplay(const UObject* WorldContext
 
 bool UExtraFunctionalityLibrary::IsReplayCurrentlyActive(const UObject * WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
-		return World->DemoNetDriver != nullptr;
+		return World->GetDemoNetDriver() != nullptr;
 	}
 	return false;
 }
 
 void UExtraFunctionalityLibrary::SaveReplayCheckpoint(const UObject * WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
-		if (World->DemoNetDriver)
+		if (World->GetDemoNetDriver())
 		{
-			if (!World->DemoNetDriver->IsSavingCheckpoint())
+			if (!World->GetDemoNetDriver()->IsSavingCheckpoint())
 			{
-				UE_LOG(LogExtraFunctionalityLibrary, Display, TEXT("Started saving checkpoint at recording time: [%f]"), World->DemoNetDriver->GetDemoCurrentTime());
-				World->DemoNetDriver->SaveCheckpoint();
+				UE_LOG(LogExtraFunctionalityLibrary, Display, TEXT("Started saving checkpoint at recording time: [%f]"), World->GetDemoNetDriver()->GetDemoCurrentTime());
 			}
 			else
 			{
@@ -1721,7 +1719,7 @@ void UExtraFunctionalityLibrary::SaveReplayCheckpoint(const UObject * WorldConte
 
 bool UExtraFunctionalityLibrary::PlayReplay(const UObject* WorldContextObject, const FString & ReplayName)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		if (UGameInstance* const Gi = World->GetGameInstance())
 		{
@@ -1734,7 +1732,7 @@ bool UExtraFunctionalityLibrary::PlayReplay(const UObject* WorldContextObject, c
 
 void UExtraFunctionalityLibrary::AddUserToReplay(const UObject* WorldContextObject, const FString & UserString)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		if (UGameInstance* const Gi = World->GetGameInstance())
 		{
@@ -1746,7 +1744,7 @@ void UExtraFunctionalityLibrary::AddUserToReplay(const UObject* WorldContextObje
 
 void UExtraFunctionalityLibrary::JumpToTimeInReplay(float ReplayTime, const UObject * WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		
 	}
@@ -1754,9 +1752,9 @@ void UExtraFunctionalityLibrary::JumpToTimeInReplay(float ReplayTime, const UObj
 
 bool UExtraFunctionalityLibrary::IsReplayPaused(const UObject * WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{		
-		if (AWorldSettings* const Settings = World->GetWorldSettings())
+		if (const AWorldSettings* const Settings = World->GetWorldSettings())
 		{
 			return Settings->GetPauserPlayerState() != nullptr;			
 		}
@@ -1774,11 +1772,11 @@ static int32 PreviousMBSetting = 0;
 
 void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObject * WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{					
 		AWorldSettings* const Settings = World->GetWorldSettings();
 
-		const bool IsPaused = false;// Settings->Pauser;
+		const bool IsPaused = (Settings->GetPauserPlayerState() != nullptr);
 		if (IsPaused != NewState)
 		{				
 			UE_LOG(LogExtraFunctionalityLibrary, Display, TEXT("Changing replay pause state to: [%s]"), (NewState) ? TEXT("PAUSED") : TEXT("UN-PAUSED"));
@@ -1806,7 +1804,7 @@ void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObje
 				CVarAA->Set(PreviousAASetting);
 				CVarMB->Set(PreviousMBSetting);
 				
-				Settings->SetPauserPlayerState(NULL);
+				Settings->SetPauserPlayerState(nullptr);
 			}				
 		}		
 	}
@@ -1814,7 +1812,7 @@ void UExtraFunctionalityLibrary::SetReplayPausedState(bool NewState, const UObje
 
 void UExtraFunctionalityLibrary::SetReplayPlaybackSpeed(const UObject* WorldContextObject, float NewReplaySpeed)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		World->GetWorldSettings()->DemoPlayTimeDilation = NewReplaySpeed;
 	}
@@ -1822,7 +1820,7 @@ void UExtraFunctionalityLibrary::SetReplayPlaybackSpeed(const UObject* WorldCont
 
 float UExtraFunctionalityLibrary::GetReplayPlaybackSpeed(const UObject * WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
 		return World->GetWorldSettings()->DemoPlayTimeDilation;
 	}
@@ -1831,11 +1829,11 @@ float UExtraFunctionalityLibrary::GetReplayPlaybackSpeed(const UObject * WorldCo
 
 float UExtraFunctionalityLibrary::GetCurrentReplayTotalTimeInSeconds(const UObject* WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
-		if (World->DemoNetDriver)
+		if (World->GetDemoNetDriver())
 		{
-			return World->DemoNetDriver->DemoTotalTime;
+			return World->GetDemoNetDriver()->GetDemoTotalTime();
 		}
 	}
 	return 0.0f;
@@ -1843,11 +1841,11 @@ float UExtraFunctionalityLibrary::GetCurrentReplayTotalTimeInSeconds(const UObje
 
 float UExtraFunctionalityLibrary::GetCurrentReplayCurrentTimeInSeconds(const UObject* WorldContextObject)
 {
-	if (UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
+	if (const UWorld* const World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
 	{
-		if (World->DemoNetDriver)
+		if (World->GetDemoNetDriver())
 		{
-			return World->DemoNetDriver->DemoCurrentTime;
+			return World->GetDemoNetDriver()->GetDemoCurrentTime();
 		}
 	}
 	return 0.0f;

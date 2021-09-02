@@ -13,20 +13,21 @@ public class ExtraFunctionality : ModuleRules
         PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
 
 
-        PublicDependencyModuleNames.AddRange(new string[] {
-            "Core",
-            "UMG",
-        });
+        //PublicDependencyModuleNames.AddRange(new string[] {
+        //});
 
         PrivateDependencyModuleNames.AddRange(new string[] {
             "ApplicationCore",
-            "HTTP",
-            "NetworkReplayStreaming",
+            "Core",
             "CoreUObject",
             "Engine",
+            "HTTP",
             "InputCore",
+            "NetworkReplayStreaming",
+            "PhysicsCore",
             "Slate",
             "SlateCore",
+            "UMG",
         });
     }
 }
